@@ -1,18 +1,40 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
+
+// Routes
 import authRoutes from './routes/authRoutes.js';
 import courseRoutes from './routes/courseRoutes.js';
 import examRoutes from './routes/examRoutes.js';
 import facultyRoutes from './routes/facultyRoutes.js';
 import codeRoutes from './routes/codeRoutes.js';
-import { seedDatabase } from './seed/seedData.js';
-import { seedEnhancements } from './seed/seedEnhancements.js';
+import pool, { rawDb } from './config/db.js';
 
 dotenv.config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Auto-seed check for missing courses
+try {
+  const courseCheck = rawDb.prepare('SELECT COUNT(*) as cnt FROM courses').get();
+  if (!courseCheck || courseCheck.cnt === 0) {
+    console.log('🌱 Critical tables empty! Force running seedData...');
+    import('./seed/seedData.js').then(s => s.seedDatabase()).catch(console.error);
+  }
+} catch (err) {
+  console.error('Error checking courses on startup:', err);
+}
+
+// Middleware
+app.use(cors());
+app.use(express.json());
 
 // Enable CORS for frontend development
 app.use(

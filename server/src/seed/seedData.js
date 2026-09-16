@@ -7,11 +7,13 @@ export async function seedDatabase() {
   initSchema();
 
   // Check if already seeded
-  const check = rawDb.prepare('SELECT COUNT(*) as cnt FROM users').get();
-  if (check && check.cnt > 0) {
+  const checkUsers = rawDb.prepare('SELECT COUNT(*) as cnt FROM users').get();
+  const checkCourses = rawDb.prepare('SELECT COUNT(*) as cnt FROM courses').get();
+  if (checkUsers && checkUsers.cnt > 0 && checkCourses && checkCourses.cnt > 0) {
     console.log('Database already contains records. Skipping initial seeding.');
     return;
   }
+
 
   console.log('🌱 Seeding initial data for Adaptive Learning Platform...');
 
@@ -63,7 +65,7 @@ export async function seedDatabase() {
 
   for (const u of users) {
     rawDb.prepare(`
-      INSERT INTO users (id, first_name, last_name, email, password_hash, role)
+      INSERT OR REPLACE INTO users (id, first_name, last_name, email, password_hash, role)
       VALUES (?, ?, ?, ?, ?, ?)
     `).run(u.id, u.first_name, u.last_name, u.email, u.password_hash, u.role);
   }
@@ -76,13 +78,13 @@ export async function seedDatabase() {
   // 2. Student Profiles
   // Alex: Fresh student who hasn't taken Entrance Exam
   rawDb.prepare(`
-    INSERT INTO student_profiles (user_id, assigned_mentor_id, assigned_faculty_id, current_level, entrance_completed)
+    INSERT OR REPLACE INTO student_profiles (user_id, assigned_mentor_id, assigned_faculty_id, current_level, entrance_completed)
     VALUES (?, ?, ?, 'beginner', 0)
   `).run(alexId, mentorId, facultyId);
 
   // Maria: Has completed entrance exam, placed in Intermediate
   rawDb.prepare(`
-    INSERT INTO student_profiles (user_id, assigned_mentor_id, assigned_faculty_id, current_level, entrance_completed)
+    INSERT OR REPLACE INTO student_profiles (user_id, assigned_mentor_id, assigned_faculty_id, current_level, entrance_completed)
     VALUES (?, ?, ?, 'intermediate', 1)
   `).run(mariaId, mentorId, facultyId);
 
@@ -91,7 +93,7 @@ export async function seedDatabase() {
   const courseWeb201Id = crypto.randomUUID();
 
   rawDb.prepare(`
-    INSERT INTO courses (id, title, code, description)
+    INSERT OR REPLACE INTO courses (id, title, code, description)
     VALUES (?, ?, ?, ?)
   `).run(
     courseCs101Id,
@@ -101,7 +103,7 @@ export async function seedDatabase() {
   );
 
   rawDb.prepare(`
-    INSERT INTO courses (id, title, code, description)
+    INSERT OR REPLACE INTO courses (id, title, code, description)
     VALUES (?, ?, ?, ?)
   `).run(
     courseWeb201Id,
@@ -448,7 +450,7 @@ In large distributed caching systems, consistent hashing maps both servers and d
 
   for (const mod of modules) {
     rawDb.prepare(`
-      INSERT INTO modules (id, course_id, title, level, sequence_order, study_time_recommended, content_body)
+      INSERT OR REPLACE INTO modules (id, course_id, title, level, sequence_order, study_time_recommended, content_body)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `).run(
       mod.id,
@@ -772,7 +774,7 @@ In large distributed caching systems, consistent hashing maps both servers and d
 
   for (const q of questions) {
     rawDb.prepare(`
-      INSERT INTO question_bank (id, course_id, difficulty, question_text, option_a, option_b, option_c, option_d, correct_option)
+      INSERT OR REPLACE INTO question_bank (id, course_id, difficulty, question_text, option_a, option_b, option_c, option_d, correct_option)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       crypto.randomUUID(),
@@ -790,12 +792,12 @@ In large distributed caching systems, consistent hashing maps both servers and d
   // 6. Seed sample progress and pending test request for Maria
   const mariaModule = modules[3]; // Module 2.1 Linked Lists
   rawDb.prepare(`
-    INSERT INTO student_module_progress (student_id, module_id, time_spent_minutes, is_completed)
+    INSERT OR REPLACE INTO student_module_progress (student_id, module_id, time_spent_minutes, is_completed)
     VALUES (?, ?, 195, 1)
   `).run(mariaId, mariaModule.id);
 
   rawDb.prepare(`
-    INSERT INTO test_requests (id, student_id, module_id, reviewer_id, status, time_spent_minutes)
+    INSERT OR REPLACE INTO test_requests (id, student_id, module_id, reviewer_id, status, time_spent_minutes)
     VALUES (?, ?, ?, ?, 'pending', 195)
   `).run(crypto.randomUUID(), mariaId, mariaModule.id, mentorId);
 
