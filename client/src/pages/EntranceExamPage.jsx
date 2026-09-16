@@ -124,11 +124,11 @@ export default function EntranceExamPage({ onComplete }) {
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-6 text-slate-300 px-4">
       <div className="text-center space-y-4 max-w-md">
         <div className="w-16 h-16 border-4 border-indigo-900 border-t-indigo-500 rounded-full animate-spin mx-auto" />
-        <div>
-          <h3 className="text-lg font-bold text-white mb-1">Preparing Your Diagnostic Exam</h3>
-          <p className="text-sm text-slate-400">{loadingStatus}</p>
-          <p className="text-xs text-indigo-400 mt-2">Powered by Gemini AI • Questions are unique per session</p>
-        </div>
+          <div>
+            <h3 className="text-lg font-bold text-white mb-1">Preparing Your Diagnostic Exam</h3>
+            <p className="text-sm text-slate-400">{loadingStatus}</p>
+            <p className="text-xs text-indigo-400 mt-2">✨ Questions are unique per session</p>
+          </div>
       </div>
     </div>
   );
@@ -238,13 +238,10 @@ export default function EntranceExamPage({ onComplete }) {
             <Brain className="w-5 h-5 text-indigo-500 shrink-0" />
             <div>
               <h2 className="text-sm font-bold text-white truncate">Diagnostic Exam — {courseTitle}</h2>
-              <p className="text-xs text-slate-400">
-                {part === 'mcq' ? 'Part 1: AI-Generated MCQ Diagnostic' : 'Part 2: Coding Challenge'}
-                {part === 'mcq' && (
-                  <span className="ml-2 text-indigo-400 font-medium">✦ Gemini AI</span>
-                )}
-              </p>
-            </div>
+                <p className="text-xs text-slate-400">
+                  {part === 'mcq' ? 'Part 1: AI-Generated MCQ Diagnostic' : 'Part 2: Coding Challenge'}
+                </p>
+              </div>
           </div>
           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-mono text-sm font-bold border ${
             timeLeft < 120

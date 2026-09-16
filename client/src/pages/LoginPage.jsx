@@ -358,7 +358,7 @@ export default function LoginPage() {
             </div>
           )}
         </div>
-        <p className="text-center text-xs text-gray-400 mt-5">EduVibe AI · Adaptive Learning · Powered by Gemini AI</p>
+        <p className="text-center text-xs text-gray-400 mt-5">EduVibe AI • Adaptive Learning Platform</p>
       </div>
     </div>
   );
