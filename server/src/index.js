@@ -4,8 +4,10 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
 import courseRoutes from './routes/courseRoutes.js';
 import examRoutes from './routes/examRoutes.js';
-import mentorRoutes from './routes/mentorRoutes.js';
+import facultyRoutes from './routes/facultyRoutes.js';
+import codeRoutes from './routes/codeRoutes.js';
 import { seedDatabase } from './seed/seedData.js';
+import { seedEnhancements } from './seed/seedEnhancements.js';
 
 dotenv.config();
 
@@ -26,6 +28,7 @@ app.use(express.json());
 // Initialize and auto-seed database
 try {
   await seedDatabase();
+  await seedEnhancements();
 } catch (err) {
   console.error('Database initialization error:', err);
 }
@@ -35,8 +38,8 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/exams', examRoutes);
 app.use('/api/v1/tests', examRoutes); // Supports /api/v1/tests/request-access
-app.use('/api/v1/mentor', mentorRoutes);
-app.use('/api/v1/faculty', mentorRoutes); // Faculty shares review and roster capabilities
+app.use('/api/v1/faculty', facultyRoutes);
+app.use('/api/v1/code', codeRoutes);
 
 // Health check endpoint
 app.get('/api/v1/health', (req, res) => {

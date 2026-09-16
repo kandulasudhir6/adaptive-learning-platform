@@ -53,6 +53,12 @@ export function AuthProvider({ children }) {
     throw new Error(res.error || 'Registration failed');
   };
 
+  const loginWithToken = (token, user) => {
+    localStorage.setItem('alp_auth_token', token);
+    setToken(token);
+    setUser(user);
+  };
+
   const logout = () => {
     localStorage.removeItem('alp_auth_token');
     setToken(null);
@@ -73,7 +79,6 @@ export function AuthProvider({ children }) {
   const quickLogin = async (role) => {
     const roleCredentials = {
       student: { email: 'alex@student.com', password: 'password123' },
-      mentor: { email: 'prof.sarah@mentor.com', password: 'password123' },
       faculty: { email: 'dr.jenkins@faculty.com', password: 'password123' },
     };
 
@@ -90,6 +95,7 @@ export function AuthProvider({ children }) {
         token,
         loading,
         login,
+        loginWithToken,
         register,
         logout,
         refreshUser,

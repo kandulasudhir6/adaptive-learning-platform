@@ -114,6 +114,84 @@ export function initSchema() {
       last_studied_at TEXT DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (student_id, module_id)
     );
+
+    CREATE TABLE IF NOT EXISTS user_login_logs (
+      id TEXT PRIMARY KEY,
+      user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+      login_time TEXT DEFAULT CURRENT_TIMESTAMP,
+      ip_address TEXT,
+      device_info TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS faculty_subjects (
+      id TEXT PRIMARY KEY,
+      faculty_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+      subject_name TEXT NOT NULL,
+      category TEXT NOT NULL,
+      description TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS student_course_enrollments (
+      id TEXT PRIMARY KEY,
+      student_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+      course_id TEXT REFERENCES courses(id) ON DELETE CASCADE,
+      faculty_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+      enrolled_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      status TEXT DEFAULT 'active' CHECK(status IN ('active', 'completed', 'dropped')),
+      UNIQUE(student_id, course_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS student_roadmaps (
+      id TEXT PRIMARY KEY,
+      student_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+      course_id TEXT REFERENCES courses(id) ON DELETE CASCADE,
+      faculty_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+      title TEXT NOT NULL,
+      overview TEXT,
+      current_level TEXT DEFAULT 'beginner',
+      status TEXT DEFAULT 'pending_approval' CHECK(status IN ('pending_approval', 'approved', 'customized')),
+      faculty_notes TEXT,
+      milestones_json TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(student_id, course_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS coding_challenges (
+      id TEXT PRIMARY KEY,
+      course_id TEXT REFERENCES courses(id) ON DELETE CASCADE,
+      module_id TEXT REFERENCES modules(id) ON DELETE SET NULL,
+      difficulty TEXT NOT NULL CHECK(difficulty IN ('beginner', 'intermediate', 'advanced')),
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      starter_code TEXT NOT NULL,
+      test_cases_json TEXT NOT NULL,
+      hints TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS coding_submissions (
+      id TEXT PRIMARY KEY,
+      student_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+      challenge_id TEXT REFERENCES coding_challenges(id) ON DELETE CASCADE,
+      exam_session_id TEXT REFERENCES exam_sessions(id) ON DELETE CASCADE,
+      code_submitted TEXT NOT NULL,
+      passed_cases INTEGER NOT NULL,
+      total_cases INTEGER NOT NULL,
+      is_passed INTEGER NOT NULL,
+      execution_time_ms REAL,
+      submitted_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS faculty_qr_sessions (
+      id TEXT PRIMARY KEY,
+      session_token TEXT UNIQUE NOT NULL,
+      faculty_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+      status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'verified', 'expired')),
+      expires_at TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 }
 
@@ -176,7 +254,8 @@ export function executeQuery(rawSql, params = []) {
     return { rows: [], rowCount: 0 };
   }
 
-  const { sql, params: finalParams } = normalizeQuery(rawSql, params);
+  const { sql, params: rawFinalParams } = normalizeQuery(rawSql, params);
+  const finalParams = rawFinalParams.map(p => p === undefined ? null : p);
 
   // Check if query is returning data (SELECT or RETURNING)
   const isSelect = upper.startsWith('SELECT') || upper.startsWith('(SELECT') || upper.includes('RETURNING');

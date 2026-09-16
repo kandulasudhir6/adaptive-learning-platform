@@ -26,7 +26,6 @@ async function request(endpoint, options = {}) {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      // If token expired or unauthorized, clear storage
       if (response.status === 401 && !endpoint.includes('/login')) {
         localStorage.removeItem('alp_auth_token');
         localStorage.removeItem('alp_user_data');
@@ -54,15 +53,41 @@ export const api = {
       }),
     getMe: () => request('/auth/me'),
     getDemoAccounts: () => request('/auth/demo-accounts'),
+
+    // Faculty QR Authentication
+    initiateFacultyQR: () =>
+      request('/auth/faculty-qr/initiate', {
+        method: 'POST',
+      }),
+    checkFacultyQR: (token) => request(`/auth/faculty-qr/status/${token}`),
+    verifyFacultyQR: (payload) =>
+      request('/auth/faculty-qr/verify', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
   },
   courses: {
     list: () => request('/courses'),
+    getFaculties: () => request('/courses/faculties'),
+    enroll: (courseId, facultyId) =>
+      request(`/courses/${courseId}/enroll`, {
+        method: 'POST',
+        body: JSON.stringify({ facultyId }),
+      }),
     getContent: (courseId) => request(`/courses/${courseId}/content`),
+    getMyRoadmap: (courseId) => request(`/courses/${courseId}/roadmap`),
     getModule: (moduleId) => request(`/courses/modules/${moduleId}`),
     updateProgress: (moduleId, progressData) =>
       request(`/courses/modules/${moduleId}/progress`, {
         method: 'POST',
         body: JSON.stringify(progressData),
+      }),
+  },
+  code: {
+    run: (payload) =>
+      request('/code/run', {
+        method: 'POST',
+        body: JSON.stringify(payload),
       }),
   },
   exams: {
@@ -71,10 +96,10 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ courseId }),
       }),
-    submitEntrance: (examSessionId, responses) =>
+    submitEntrance: (examSessionId, responses, codingSubmission) =>
       request('/exams/entrance/submit', {
         method: 'POST',
-        body: JSON.stringify({ examSessionId, responses }),
+        body: JSON.stringify({ examSessionId, responses, codingSubmission }),
       }),
     requestAccess: (moduleId) =>
       request('/exams/request-access', {
@@ -92,14 +117,26 @@ export const api = {
         body: JSON.stringify({ examSessionId, responses }),
       }),
   },
-  mentor: {
-    getRequests: () => request('/mentor/requests'),
-    reviewRequest: (requestId, payload) =>
-      request(`/mentor/requests/${requestId}`, {
+  faculty: {
+    getMyStudents: () => request('/faculty/my-students'),
+    getStudentLogins: (studentId) => request(`/faculty/student/${studentId}/logins`),
+    getStudentRoadmap: (studentId) => request(`/faculty/student/${studentId}/roadmap`),
+    updateStudentRoadmap: (roadmapId, payload) =>
+      request(`/faculty/roadmap/${roadmapId}`, {
         method: 'PATCH',
         body: JSON.stringify(payload),
       }),
-    getRoster: () => request('/mentor/students'),
-    getQuestionBank: () => request('/mentor/question-bank'),
+    getSubjects: () => request('/faculty/subjects'),
+    uploadSubject: (payload) =>
+      request('/faculty/subjects', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
+    getRequests: () => request('/faculty/requests'),
+    reviewRequest: (requestId, payload) =>
+      request(`/faculty/requests/${requestId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      }),
   },
 };

@@ -1,401 +1,431 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import CodingArena from '../components/CodingArena';
+import RoadmapViewer from '../components/RoadmapViewer';
 import LevelBadge from '../components/LevelBadge';
 import {
-  Brain,
-  Clock,
-  CheckCircle,
-  ArrowRight,
-  AlertCircle,
-  HelpCircle,
-  Award,
-  Zap,
-  RotateCcw,
+  Brain, Clock, ArrowRight, AlertCircle, HelpCircle,
+  Code, ChevronRight, ChevronLeft, Trophy, RefreshCw, Zap
 } from 'lucide-react';
 
+const EXAM_DURATION_SECS = 20 * 60;
+
+function formatTime(secs) {
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
 export default function EntranceExamPage({ onComplete }) {
-  const { user, refreshUser } = useAuth();
+  const { refreshUser } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [courseId, setCourseId] = useState(null);
   const [courseTitle, setCourseTitle] = useState('');
   const [examSessionId, setExamSessionId] = useState(null);
+  
   const [questions, setQuestions] = useState([]);
+  const [codingChallenges, setCodingChallenges] = useState([]);
+  
+  const [part, setPart] = useState('mcq');
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState({}); // { [questionId]: 'A' | 'B' | 'C' | 'D' }
-  const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes timer
+  
+  const [answers, setAnswers] = useState({});
+  const [codes, setCodes] = useState({});
+  const [lastRunResults, setLastRunResults] = useState({});
+  
+  const [timeLeft, setTimeLeft] = useState(EXAM_DURATION_SECS);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loadingStatus, setLoadingStatus] = useState('Connecting to AI Question Engine…');
 
-  // Initialize and load entrance exam
   useEffect(() => {
     async function initExam() {
       try {
         setLoading(true);
-        // 1. Fetch courses
+        setLoadingStatus('Fetching enrolled course…');
+
         const coursesRes = await api.courses.list();
         const course = coursesRes.courses?.[0];
-        if (!course) {
-          setError('No active courses found to take the entrance exam.');
-          return;
-        }
+        if (!course) { setError('No active course found. Please enroll in a course first.'); return; }
         setCourseId(course.id);
         setCourseTitle(course.title);
 
-        // 2. Generate exam via MAPS
+        setLoadingStatus(`Generating AI diagnostic questions for "${course.title}"…`);
+
         const examRes = await api.exams.generateEntrance(course.id);
+
         if (examRes.success) {
           setExamSessionId(examRes.examSessionId);
-          setQuestions(examRes.questions);
+          setQuestions(examRes.questions || []);
+
+          const challenges = examRes.codingChallenges || [];
+          if (examRes.codingChallenge && challenges.length === 0) {
+            challenges.push(examRes.codingChallenge);
+          }
+          
+          setCodingChallenges(challenges);
+          const initialCodes = {};
+          challenges.forEach(c => {
+            initialCodes[c.id] = c.starterCode || '';
+          });
+          setCodes(initialCodes);
         } else {
-          setError(examRes.error || 'Failed to initialize entrance exam.');
+          setError(examRes.error || 'Failed to initialize exam.');
         }
       } catch (err) {
-        setError(err.message || 'Error generating entrance exam.');
+        setError(err.message || 'Error generating exam. Please try again.');
       } finally {
         setLoading(false);
       }
     }
-
     initExam();
   }, []);
 
-  // Timer countdown
   useEffect(() => {
-    if (!examSessionId || result || timeLeft <= 0) return;
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [examSessionId, result, timeLeft]);
+    if (loading || result || !examSessionId) return;
+    if (timeLeft <= 0) { handleSubmit(true); return; }
+    const t = setInterval(() => setTimeLeft((p) => p - 1), 1000);
+    return () => clearInterval(t);
+  }, [loading, result, timeLeft, examSessionId]);
 
-  const handleSelectOption = (questionId, optionKey) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: optionKey,
-    }));
-  };
-
-  const handleSubmitExam = async () => {
-    if (!examSessionId) return;
-
-    // Check unanswered
-    const answeredCount = Object.keys(answers).length;
-    if (answeredCount < questions.length) {
-      const confirmSubmit = window.confirm(
-        `You have answered ${answeredCount} of ${questions.length} questions. Are you sure you want to submit?`
-      );
-      if (!confirmSubmit) return;
-    }
-
+  const handleSubmit = useCallback(async (isTimeout = false) => {
+    if (submitting) return;
     setSubmitting(true);
-    setError('');
-
     try {
-      const formattedResponses = questions.map((q) => ({
+      const responses = questions.map((q) => ({
         questionId: q.id,
-        selectedOption: answers[q.id] || null,
+        selectedAnswer: answers[q.id] || null,
+        selectedOption: answers[q.id] || null, // fallback for backend
       }));
-
-      const res = await api.exams.submitEntrance(examSessionId, formattedResponses);
+      
+      const codingSubmissions = codingChallenges.map((c) => ({
+        challengeId: c.id,
+        code: codes[c.id] || '',
+        testResults: lastRunResults[c.id]?.testCases || [],
+      }));
+      
+      const res = await api.exams.submitEntrance(examSessionId, responses, codingSubmissions);
       if (res.success) {
         setResult(res);
         await refreshUser();
       } else {
-        setError(res.error || 'Failed to evaluate exam.');
+        setError(res.error || 'Submission failed.');
       }
     } catch (err) {
-      setError(err.message || 'Error submitting entrance exam.');
+      setError(err.message || 'Submission error.');
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [submitting, examSessionId, questions, answers, codingChallenges, codes, lastRunResults, refreshUser]);
 
-  const formatTimer = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  if (loading) return (
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-6 text-slate-300 px-4">
+      <div className="text-center space-y-4 max-w-md">
+        <div className="w-16 h-16 border-4 border-indigo-900 border-t-indigo-500 rounded-full animate-spin mx-auto" />
+        <div>
+          <h3 className="text-lg font-bold text-white mb-1">Preparing Your Diagnostic Exam</h3>
+          <p className="text-sm text-slate-400">{loadingStatus}</p>
+          <p className="text-xs text-indigo-400 mt-2">Powered by Gemini AI • Questions are unique per session</p>
+        </div>
+      </div>
+    </div>
+  );
 
-  if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto py-16 px-4 text-center">
-        <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <h2 className="text-xl font-bold text-white">Generating Diagnostic Exam...</h2>
-        <p className="text-sm text-slate-400 mt-2">
-          Multi-Tiered Adaptive Pool Sampling (MAPS) is curating 15 balanced questions...
+  if (error) return (
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-6">
+      <div className="bg-slate-900 border border-rose-900/50 rounded-2xl p-6 max-w-md w-full text-center shadow-sm space-y-4">
+        <AlertCircle className="w-10 h-10 text-rose-500 mx-auto" />
+        <h3 className="text-white font-bold text-lg">Exam Initialization Error</h3>
+        <p className="text-sm text-rose-400">{error}</p>
+        <div className="flex gap-3 justify-center">
+          <button
+            onClick={() => { setError(''); setLoading(true); window.location.reload(); }}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl flex items-center gap-2 transition"
+          >
+            <RefreshCw className="w-4 h-4" /> Retry
+          </button>
+          {onComplete && (
+            <button onClick={onComplete} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm rounded-xl transition">
+              Back to Dashboard
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (result) return (
+    <div className="min-h-screen bg-slate-950 py-10 px-4 max-w-4xl mx-auto">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-sm mb-8 text-center">
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <Trophy className="w-6 h-6 text-amber-500" />
+          <span className="text-amber-500 font-bold text-sm uppercase tracking-wider">Diagnostic Complete</span>
+        </div>
+        <h2 className="text-4xl font-black text-white mb-2">
+          {result.compositeScore ?? result.scorePercentage ?? '—'}%
+        </h2>
+        <p className="text-slate-400 text-sm mb-4">Overall Score</p>
+        <div className="flex items-center justify-center gap-6 text-sm text-slate-300 mb-5 flex-wrap">
+          {result.mcqPercentage !== undefined && (
+            <div className="text-center">
+              <div className="text-xl font-bold text-white">{result.mcqPercentage}%</div>
+              <div className="text-xs text-slate-500">MCQ Score</div>
+            </div>
+          )}
+          {result.codingScorePct !== undefined && (
+            <div className="text-center">
+              <div className="text-xl font-bold text-white">{result.codingScorePct}%</div>
+              <div className="text-xs text-slate-500">Coding Score</div>
+            </div>
+          )}
+          <div className="text-center">
+            <div className="flex items-center justify-center">
+              <LevelBadge level={result.assignedLevel || result.level || 'beginner'} />
+            </div>
+            <div className="text-xs text-slate-500 mt-1">Assigned Level</div>
+          </div>
+        </div>
+        <p className="text-slate-400 text-sm max-w-lg mx-auto">
+          Your AI personalized roadmap has been generated based on your performance.
         </p>
       </div>
-    );
-  }
 
-  // Result View
-  if (result) {
-    const levelColors = {
-      beginner: 'from-emerald-600 to-teal-700 border-emerald-500/30',
-      intermediate: 'from-blue-600 to-indigo-700 border-blue-500/30',
-      advanced: 'from-purple-600 to-violet-700 border-purple-500/30',
-    };
+      {result.roadmap && (
+        <RoadmapViewer
+          roadmap={result.roadmap}
+          courseTitle={courseTitle}
+          facultyName={result.assignedFacultyName || 'Faculty Mentor'}
+        />
+      )}
 
-    return (
-      <div className="max-w-3xl mx-auto py-12 px-4 animate-fade-in">
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-          {/* Header Banner */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-400 mb-4 border border-indigo-500/20">
-              <Award className="w-8 h-8" />
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
-              Diagnostic Evaluation Complete
-            </h2>
-            <p className="text-slate-400 mt-1">
-              Your knowledge has been evaluated across foundational, intermediate, and advanced domains.
-            </p>
-          </div>
-
-          {/* Level Placement Card */}
-          <div
-            className={`p-6 rounded-2xl bg-gradient-to-br ${
-              levelColors[result.assignedLevel] || levelColors.beginner
-            } text-white shadow-xl mb-8 border`}
-          >
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div>
-                <div className="text-xs uppercase tracking-widest text-white/80 font-bold">
-                  Assigned Starting Level
-                </div>
-                <div className="text-3xl font-extrabold mt-1 capitalize tracking-tight flex items-center gap-2">
-                  <Zap className="w-6 h-6 text-amber-300" />
-                  {result.assignedLevel} Level
-                </div>
-                <p className="text-sm text-white/90 mt-2 max-w-md">
-                  {result.assignedLevel === 'beginner' &&
-                    'Placed in Level 1. You will build core competencies with linear data structures and Big-O foundations.'}
-                  {result.assignedLevel === 'intermediate' &&
-                    'Placed in Level 2. Level 1 foundational modules have been bypassed. You start directly with Linked Lists, BSTs, and Stacks!'}
-                  {result.assignedLevel === 'advanced' &&
-                    'Placed in Level 3. Excellent mastery! Levels 1 & 2 are bypassed. You start directly with Dynamic Programming and Advanced Graphs.'}
-                </p>
-              </div>
-
-              <div className="bg-black/20 backdrop-blur-md px-6 py-4 rounded-xl text-center border border-white/10 min-w-[140px]">
-                <div className="text-3xl font-black">{result.scorePercentage}%</div>
-                <div className="text-xs text-white/80 font-medium">Weighted Score</div>
-                <div className="text-[11px] text-white/70 mt-1">
-                  {result.totalEarnedPoints} / {result.maxPossiblePoints} pts
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Tier Performance Breakdown */}
-          <div className="mb-8">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-              MAPS Multi-Tier Accuracy Breakdown
-            </h4>
-            <div className="grid grid-cols-3 gap-3">
-              {['beginner', 'intermediate', 'advanced'].map((tier) => {
-                const b = result.breakdown?.[tier] || { correct: 0, total: 5, points: 0 };
-                const pct = b.total > 0 ? Math.round((b.correct / b.total) * 100) : 0;
-                return (
-                  <div key={tier} className="bg-slate-950 p-4 rounded-xl border border-slate-800">
-                    <div className="text-xs font-semibold uppercase text-slate-400 capitalize">
-                      {tier}
-                    </div>
-                    <div className="text-xl font-bold text-white mt-1">
-                      {b.correct} / {b.total}
-                    </div>
-                    <div className="text-xs text-slate-500 mt-0.5">{pct}% Accuracy</div>
-                    <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
-                      <div
-                        className="bg-indigo-500 h-full rounded-full"
-                        style={{ width: `${pct}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Action Button */}
-          <button
-            onClick={onComplete}
-            className="w-full py-4 px-6 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2 text-base transition"
-          >
-            Access My Calibrated Curriculum
-            <ArrowRight className="w-5 h-5" />
-          </button>
-        </div>
+      <div className="mt-8 text-center">
+        <button
+          onClick={onComplete}
+          className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-sm transition flex items-center gap-2 mx-auto"
+        >
+          <ArrowRight className="w-4 h-4" /> Go to Dashboard
+        </button>
       </div>
-    );
-  }
+    </div>
+  );
 
-  // Active Exam View
+  if (!questions || questions.length === 0) return (
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-6">
+      <div className="bg-slate-900 border border-amber-900/50 rounded-2xl p-6 max-w-md w-full text-center shadow-sm space-y-4">
+        <AlertCircle className="w-10 h-10 text-amber-500 mx-auto" />
+        <h3 className="text-white font-bold">No Questions Loaded</h3>
+        <p className="text-sm text-slate-400">
+          The exam session was created but questions could not be loaded. This may happen if the entrance exam was already completed.
+        </p>
+        {onComplete && (
+          <button onClick={onComplete} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition">
+            Back to Dashboard
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
   const currentQ = questions[currentIndex];
-  const answeredCount = Object.keys(answers).length;
-  const progressPct = Math.round((answeredCount / questions.length) * 100);
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
-      {/* Exam Header */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              MAPS Diagnostic Engine
-            </span>
-            <span className="text-xs text-slate-400">15 Questions</span>
+    <div className="min-h-screen bg-slate-950 flex flex-col">
+      <div className="sticky top-0 z-20 bg-slate-900 border-b border-slate-800 shadow-sm">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 min-w-0">
+            <Brain className="w-5 h-5 text-indigo-500 shrink-0" />
+            <div>
+              <h2 className="text-sm font-bold text-white truncate">Diagnostic Exam — {courseTitle}</h2>
+              <p className="text-xs text-slate-400">
+                {part === 'mcq' ? 'Part 1: AI-Generated MCQ Diagnostic' : 'Part 2: Coding Challenge'}
+                {part === 'mcq' && (
+                  <span className="ml-2 text-indigo-400 font-medium">✦ Gemini AI</span>
+                )}
+              </p>
+            </div>
           </div>
-          <h2 className="text-lg font-bold text-white mt-1">{courseTitle}</h2>
+          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-mono text-sm font-bold border ${
+            timeLeft < 120
+              ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 animate-pulse'
+              : 'bg-slate-800 text-slate-300 border-slate-700'
+          }`}>
+            <Clock className="w-4 h-4" />
+            {formatTime(timeLeft)}
+          </div>
         </div>
 
-        {/* Timer & Progress */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 bg-slate-950 px-3.5 py-1.5 rounded-xl border border-slate-800">
-            <Clock className={`w-4 h-4 ${timeLeft < 180 ? 'text-rose-400 animate-pulse' : 'text-slate-400'}`} />
-            <span className={`font-mono text-sm font-bold ${timeLeft < 180 ? 'text-rose-400' : 'text-slate-200'}`}>
-              {formatTimer(timeLeft)}
-            </span>
-          </div>
-
-          <div className="text-right text-xs text-slate-400">
-            <div className="font-semibold text-slate-200">
-              {answeredCount} of {questions.length} Answered
-            </div>
-            <div className="w-24 bg-slate-800 rounded-full h-1.5 mt-1">
-              <div
-                className="bg-indigo-500 h-full rounded-full transition-all duration-300"
-                style={{ width: `${progressPct}%` }}
-              ></div>
-            </div>
-          </div>
+        <div className="max-w-5xl mx-auto px-4 pb-2 flex items-center gap-3 overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => setPart('mcq')}
+            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-lg transition shrink-0 ${
+              part === 'mcq'
+                ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            MCQ ({Object.keys(answers).length}/{questions.length} answered)
+          </button>
+          
+          {codingChallenges.map((c, i) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setPart(`coding-${i}`)}
+              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-lg transition shrink-0 ${
+                part === `coding-${i}`
+                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Code className="w-3.5 h-3.5" />
+              Round {i + 1} ({c.difficulty})
+            </button>
+          ))}
         </div>
       </div>
 
-      {error && (
-        <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-center gap-2">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          {error}
-        </div>
-      )}
-
-      {/* Question Card */}
-      {currentQ && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl mb-6">
-          {/* Question Metadata */}
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Question {currentIndex + 1} of {questions.length}
-            </span>
-            <div className="flex items-center gap-2">
-              <span
-                className={`text-xs px-2.5 py-0.5 rounded-full font-semibold capitalize border ${
-                  currentQ.difficulty === 'beginner'
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                    : currentQ.difficulty === 'intermediate'
-                    ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-                    : 'bg-purple-500/10 text-purple-400 border-purple-500/30'
-                }`}
-              >
-                {currentQ.difficulty} Tier ({currentQ.difficulty === 'beginner' ? '1.0 pt' : currentQ.difficulty === 'intermediate' ? '2.0 pts' : '3.0 pts'})
+      <div className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
+        {part === 'mcq' ? (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-white text-lg">Question {currentIndex + 1} of {questions.length}</h3>
+              <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                currentQ.difficulty === 'advanced' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
+                currentQ.difficulty === 'intermediate' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+              }`}>
+                {currentQ.difficulty} Level
               </span>
             </div>
-          </div>
 
-          {/* Question Statement */}
-          <h3 className="text-base sm:text-lg font-medium text-white mb-6 leading-relaxed">
-            {currentQ.questionText}
-          </h3>
-
-          {/* Options Grid */}
-          <div className="space-y-3 mb-8">
-            {['A', 'B', 'C', 'D'].map((key) => {
-              const optionText = currentQ.options[key];
-              const isSelected = answers[currentQ.id] === key;
-              return (
+            <div className="flex gap-1">
+              {questions.map((q, idx) => (
                 <button
-                  key={key}
-                  type="button"
-                  onClick={() => handleSelectOption(currentQ.id, key)}
-                  className={`w-full text-left p-4 rounded-xl border transition-all flex items-start gap-3.5 ${
-                    isSelected
-                      ? 'bg-indigo-600/15 border-indigo-500 text-white shadow-md'
-                      : 'bg-slate-950/60 border-slate-800/80 text-slate-300 hover:border-slate-700 hover:bg-slate-950'
+                  key={q.id}
+                  onClick={() => setCurrentIndex(idx)}
+                  className={`h-2 flex-1 rounded-full transition ${
+                    currentIndex === idx ? 'bg-indigo-500' :
+                    answers[q.id] ? 'bg-indigo-900' : 'bg-slate-800 hover:bg-slate-700'
                   }`}
-                >
-                  <span
-                    className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center flex-shrink-0 transition-colors ${
-                      isSelected
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-slate-800 text-slate-400 group-hover:bg-slate-700'
-                    }`}
-                  >
-                    {key}
-                  </span>
-                  <span className="text-sm pt-1">{optionText}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Question Navigation Controls */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-800">
-            <button
-              type="button"
-              disabled={currentIndex === 0}
-              onClick={() => setCurrentIndex((prev) => prev - 1)}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none transition"
-            >
-              Previous
-            </button>
-
-            {/* Question Quick Jump Dots */}
-            <div className="hidden sm:flex items-center gap-1.5">
-              {questions.map((q, idx) => {
-                const isAnswered = Boolean(answers[q.id]);
-                const isCurrent = idx === currentIndex;
-                return (
-                  <button
-                    key={q.id}
-                    type="button"
-                    onClick={() => setCurrentIndex(idx)}
-                    className={`w-6 h-6 rounded-md text-[11px] font-bold transition-all ${
-                      isCurrent
-                        ? 'bg-indigo-600 text-white ring-2 ring-indigo-400'
-                        : isAnswered
-                        ? 'bg-slate-700 text-slate-200'
-                        : 'bg-slate-950 text-slate-600 border border-slate-800'
-                    }`}
-                  >
-                    {idx + 1}
-                  </button>
-                );
-              })}
+                  title={`Question ${idx + 1}`}
+                />
+              ))}
             </div>
 
-            {currentIndex < questions.length - 1 ? (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm">
+              <p className="text-white font-medium text-lg mb-8 leading-relaxed">
+                {currentQ.questionText || currentQ.question_text}
+              </p>
+              <div className="space-y-3">
+                {['A', 'B', 'C', 'D'].map((opt) => {
+                  const options = currentQ.options || {};
+                  const text = options[opt] || currentQ[`option_${opt.toLowerCase()}`];
+                  const isSelected = answers[currentQ.id] === opt;
+                  if (!text) return null;
+                  return (
+                    <button
+                      key={opt}
+                      onClick={() => setAnswers((p) => ({ ...p, [currentQ.id]: opt }))}
+                      className={`w-full flex items-start gap-3 p-4 rounded-xl border text-left transition ${
+                        isSelected
+                          ? 'border-indigo-500 bg-indigo-500/10'
+                          : 'border-slate-700 hover:border-slate-600 bg-slate-800'
+                      }`}
+                    >
+                      <div className={`shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold ${
+                        isSelected ? 'bg-indigo-500 text-white' : 'bg-slate-700 text-slate-400'
+                      }`}>
+                        {opt}
+                      </div>
+                      <span className={`text-sm ${isSelected ? 'text-indigo-100 font-medium' : 'text-slate-300'}`}>
+                        {text}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-4">
               <button
-                type="button"
-                onClick={() => setCurrentIndex((prev) => prev + 1)}
-                className="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-slate-800 hover:bg-slate-700 transition"
+                disabled={currentIndex === 0}
+                onClick={() => setCurrentIndex((p) => Math.max(0, p - 1))}
+                className="px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 transition flex items-center gap-2 disabled:opacity-50"
               >
-                Next
+                <ChevronLeft className="w-4 h-4" /> Previous
               </button>
-            ) : (
-              <button
-                type="button"
-                disabled={submitting}
-                onClick={handleSubmitExam}
-                className="px-6 py-2 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-600/30 transition disabled:opacity-50"
-              >
-                {submitting ? 'Scoring Exam...' : 'Submit Diagnostic'}
-              </button>
-            )}
+
+              {currentIndex === questions.length - 1 ? (
+                <button
+                  onClick={() => codingChallenges.length > 0 ? setPart('coding-0') : handleSubmit()}
+                  className="px-6 py-2.5 rounded-xl font-bold text-sm bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-sm flex items-center gap-2"
+                >
+                  {codingChallenges.length > 0 ? 'Continue to Coding' : 'Submit Exam'} <ArrowRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => setCurrentIndex((p) => Math.min(questions.length - 1, p + 1))}
+                  className="px-6 py-2.5 rounded-xl font-bold text-sm bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-sm flex items-center gap-2"
+                >
+                  Next <ChevronRight className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="space-y-6">
+            {codingChallenges.map((c, i) => {
+              if (part !== `coding-${i}`) return null;
+              return (
+                <CodingArena
+                  key={c.id}
+                  challenge={c}
+                  code={codes[c.id]}
+                  setCode={(val) => setCodes((p) => ({ ...p, [c.id]: val }))}
+                  onCodeRunResult={(res) => setLastRunResults((p) => ({ ...p, [c.id]: res }))}
+                />
+              );
+            })}
+            
+            <div className="flex items-center justify-between mt-6">
+              <button
+                onClick={() => {
+                  const idx = parseInt(part.split('-')[1], 10);
+                  if (idx > 0) setPart(`coding-${idx - 1}`);
+                  else setPart('mcq');
+                }}
+                className="px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 transition flex items-center gap-2"
+              >
+                Go Back
+              </button>
+              
+              {parseInt(part.split('-')[1], 10) === codingChallenges.length - 1 ? (
+                <button
+                  onClick={() => handleSubmit()}
+                  disabled={submitting}
+                  className="px-6 py-3 rounded-xl font-bold text-sm bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition disabled:opacity-50 flex items-center gap-2"
+                >
+                  {submitting ? 'Submitting...' : 'Submit Full Exam'} <ArrowRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    const idx = parseInt(part.split('-')[1], 10);
+                    setPart(`coding-${idx + 1}`);
+                  }}
+                  className="px-6 py-3 rounded-xl font-bold text-sm bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition flex items-center gap-2"
+                >
+                  Next Round <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

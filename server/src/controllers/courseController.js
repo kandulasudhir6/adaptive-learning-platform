@@ -235,3 +235,140 @@ export const updateStudyProgress = async (req, res) => {
     return res.status(500).json({ error: 'Internal server error updating progress.' });
   }
 };
+
+/**
+ * GET /api/v1/courses/faculties
+ * List faculties with their uploaded specialized subjects for student mentor selection
+ */
+export const getFaculties = async (req, res) => {
+  try {
+    const facultiesRes = await pool.query(
+      `SELECT u.id, u.first_name, u.last_name, u.email,
+              (SELECT COUNT(*) FROM student_course_enrollments WHERE faculty_id = u.id AND status = 'active') as active_mentees_count
+       FROM users u
+       WHERE u.role = 'faculty'
+       ORDER BY u.first_name ASC`
+    );
+
+    const subjectsRes = await pool.query(`SELECT * FROM faculty_subjects ORDER BY created_at DESC`);
+
+    const faculties = facultiesRes.rows.map((f) => ({
+      ...f,
+      subjects: subjectsRes.rows.filter((s) => s.faculty_id === f.id),
+    }));
+
+    return res.status(200).json({ success: true, faculties });
+  } catch (err) {
+    console.error('Error fetching faculties:', err);
+    return res.status(500).json({ error: 'Failed to fetch faculty mentors.' });
+  }
+};
+
+/**
+ * POST /api/v1/courses/:id/enroll
+ * Student enrolls in a course and chooses their faculty mentor
+ */
+export const enrollCourseWithFaculty = async (req, res) => {
+  const studentId = req.user.id;
+  const courseId = req.params.id;
+  const { facultyId } = req.body;
+
+  if (!facultyId) {
+    return res.status(400).json({ error: 'Faculty mentor selection is required.' });
+  }
+
+  try {
+    // 1. Verify course and faculty exist
+    const course = (await pool.query(`SELECT id, title FROM courses WHERE id = $1`, [courseId])).rows[0];
+    const faculty = (await pool.query(`SELECT id, first_name, last_name FROM users WHERE id = $1 AND role = 'faculty'`, [facultyId])).rows[0];
+
+    if (!course) return res.status(404).json({ error: 'Course not found.' });
+    if (!faculty) return res.status(404).json({ error: 'Selected faculty mentor not found.' });
+
+    // 2. Upsert enrollment
+    const enrollId = (await pool.query(`SELECT id FROM student_course_enrollments WHERE student_id = $1 AND course_id = $2`, [studentId, courseId])).rows[0]?.id || null;
+
+    if (enrollId) {
+      await pool.query(
+        `UPDATE student_course_enrollments
+         SET faculty_id = $1, status = 'active', enrolled_at = CURRENT_TIMESTAMP
+         WHERE id = $2`,
+        [facultyId, enrollId]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO student_course_enrollments (id, student_id, course_id, faculty_id, status)
+         VALUES ($1, $2, $3, $4, 'active')`,
+        [crypto.randomUUID(), studentId, courseId, facultyId]
+      );
+    }
+
+    // 3. Update student profile assigned_faculty_id
+    await pool.query(
+      `UPDATE student_profiles
+       SET assigned_faculty_id = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE user_id = $2`,
+      [facultyId, studentId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Enrolled in ${course.title}! Assigned Mentor: Dr. ${faculty.first_name} ${faculty.last_name}`,
+      courseId,
+      facultyId,
+    });
+  } catch (err) {
+    console.error('Error enrolling course:', err);
+    return res.status(500).json({ error: 'Internal server error during enrollment.' });
+  }
+};
+
+/**
+ * GET /api/v1/courses/:id/roadmap
+ * Fetch student's personalized AI roadmap for this course
+ */
+export const getMyRoadmap = async (req, res) => {
+  const studentId = req.user.id;
+  const courseId = req.params.id;
+
+  try {
+    const roadmapRes = await pool.query(
+      `SELECT sr.*, c.title as course_title,
+              f.first_name as faculty_first_name, f.last_name as faculty_last_name
+       FROM student_roadmaps sr
+       JOIN courses c ON sr.course_id = c.id
+       LEFT JOIN users f ON sr.faculty_id = f.id
+       WHERE sr.student_id = $1 AND sr.course_id = $2`,
+      [studentId, courseId]
+    );
+
+    if (roadmapRes.rows.length === 0) {
+      return res.status(200).json({
+        success: true,
+        hasRoadmap: false,
+        message: 'No roadmap generated yet. Complete the mandatory diagnostic exam to synthesize your track.',
+      });
+    }
+
+    const row = roadmapRes.rows[0];
+    let milestones = [];
+    try {
+      milestones = JSON.parse(row.milestones_json);
+    } catch (e) {
+      milestones = [];
+    }
+
+    return res.status(200).json({
+      success: true,
+      hasRoadmap: true,
+      roadmap: {
+        ...row,
+        milestones,
+        facultyName: row.faculty_first_name ? `${row.faculty_first_name} ${row.faculty_last_name}` : 'Assigned Faculty',
+      },
+    });
+  } catch (err) {
+    console.error('Error fetching student roadmap:', err);
+    return res.status(500).json({ error: 'Failed to fetch roadmap.' });
+  }
+};

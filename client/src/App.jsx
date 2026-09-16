@@ -6,7 +6,7 @@ import StudentDashboard from './pages/StudentDashboard';
 import EntranceExamPage from './pages/EntranceExamPage';
 import ModuleLearningPage from './pages/ModuleLearningPage';
 import PeriodicExamPage from './pages/PeriodicExamPage';
-import MentorDashboard from './pages/MentorDashboard';
+import FacultyDashboard from './pages/FacultyDashboard';
 
 function MainApp() {
   const { user, loading } = useAuth();
@@ -15,8 +15,11 @@ function MainApp() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
-        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+          <span className="text-gray-500 text-sm font-medium">Loading EduVibe AI...</span>
+        </div>
       </div>
     );
   }
@@ -26,13 +29,15 @@ function MainApp() {
   }
 
   const isStudent = user.role === 'student';
+  const isFaculty = user.role === 'faculty' || user.role === 'admin';
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col font-sans">
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <main className="flex-1">
-        {isStudent ? (
+        {/* ─── STUDENT VIEWS ─── */}
+        {isStudent && (
           <>
             {activeTab === 'dashboard' && (
               <StudentDashboard
@@ -50,9 +55,7 @@ function MainApp() {
 
             {activeTab === 'entrance-exam' && (
               <EntranceExamPage
-                onComplete={() => {
-                  setActiveTab('dashboard');
-                }}
+                onComplete={() => setActiveTab('dashboard')}
               />
             )}
 
@@ -60,9 +63,7 @@ function MainApp() {
               <ModuleLearningPage
                 moduleId={selectedModuleId}
                 onBack={() => setActiveTab('dashboard')}
-                onRequestTest={() => {
-                  setActiveTab('dashboard');
-                }}
+                onRequestTest={() => setActiveTab('dashboard')}
                 onOpenPeriodicExam={(modId) => {
                   setSelectedModuleId(modId);
                   setActiveTab('periodic-exam');
@@ -78,9 +79,11 @@ function MainApp() {
               />
             )}
           </>
-        ) : (
-          /* Mentor / Faculty / Admin Dashboard */
-          <MentorDashboard initialTab={activeTab === 'dashboard' ? 'requests' : activeTab} />
+        )}
+
+        {/* ─── FACULTY VIEW ─── */}
+        {isFaculty && (
+          <FacultyDashboard />
         )}
       </main>
     </div>

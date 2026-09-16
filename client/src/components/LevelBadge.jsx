@@ -7,23 +7,23 @@ export default function LevelBadge({ level, size = 'md' }) {
   const configs = {
     beginner: {
       label: 'Level 1: Beginner',
-      bg: 'bg-emerald-500/15',
-      text: 'text-emerald-400',
-      border: 'border-emerald-500/30',
+      bg: 'bg-emerald-50',
+      text: 'text-emerald-700',
+      border: 'border-emerald-200',
       icon: Shield,
     },
     intermediate: {
       label: 'Level 2: Intermediate',
-      bg: 'bg-blue-500/15',
-      text: 'text-blue-400',
-      border: 'border-blue-500/30',
+      bg: 'bg-blue-50',
+      text: 'text-blue-700',
+      border: 'border-blue-200',
       icon: Award,
     },
     advanced: {
       label: 'Level 3: Advanced',
-      bg: 'bg-purple-500/15',
-      text: 'text-purple-400',
-      border: 'border-purple-500/30',
+      bg: 'bg-indigo-50',
+      text: 'text-indigo-700',
+      border: 'border-indigo-200',
       icon: Zap,
     },
   };

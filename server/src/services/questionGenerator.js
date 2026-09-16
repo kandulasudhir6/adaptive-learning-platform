@@ -1,7 +1,9 @@
 import crypto from 'node:crypto';
 import pool from '../config/db.js';
 
-// Random helper utilities
+// ---------------------------------------------------------------------------
+// STATIC FALLBACK QUESTION BANK (used when Gemini is unavailable)
+// ---------------------------------------------------------------------------
 const randomChoice = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 const shuffleArray = (array) => {
@@ -13,269 +15,250 @@ const shuffleArray = (array) => {
   return arr;
 };
 
-/**
- * Question generator templates across Beginner, Intermediate, and Advanced tiers
- */
-const dynamicGenerators = {
-  // ==========================================
-  // BEGINNER TIER DYNAMIC QUESTION GENERATORS
-  // ==========================================
+const staticGenerators = {
   beginner: [
-    // 1. Dynamic Loop Complexity
     () => {
       const step = randomChoice([2, 3, 4]);
-      const varName = randomChoice(['i', 'k', 'idx']);
-      const questionText = `Analyze the time complexity of the following code snippet:\n\`\`\`javascript\nlet count = 0;\nfor (let ${varName} = 1; ${varName} < n; ${varName} *= ${step}) {\n  count += ${varName};\n}\n\`\`\`\nWhat is the asymptotic Big-O execution time?`;
-      const correct = `O(log_${step} n) or O(log n)`;
-      const distractors = ['O(n)', 'O(n log n)', 'O(1)'];
-      return { questionText, correct, distractors };
+      return {
+        questionText: `What is the time complexity of: for(let i=1; i<n; i*=${step}) { count++; }`,
+        correct: `O(log n)`,
+        distractors: ['O(n)', 'O(n²)', 'O(1)'],
+      };
     },
-    // 2. Nested Loop Complexity
+    () => ({
+      questionText: 'Which data structure uses LIFO (Last In, First Out) order?',
+      correct: 'Stack',
+      distractors: ['Queue', 'Linked List', 'Binary Tree'],
+    }),
+    () => ({
+      questionText: 'What is the worst-case time complexity of Binary Search on a sorted array of n elements?',
+      correct: 'O(log n)',
+      distractors: ['O(n)', 'O(n log n)', 'O(1)'],
+    }),
     () => {
-      const outerVar = 'i';
-      const innerVar = 'j';
-      const questionText = `What is the worst-case time complexity of this nested traversal?\n\`\`\`javascript\nfor (let ${outerVar} = 0; ${outerVar} < n; ${outerVar}++) {\n  for (let ${innerVar} = ${outerVar}; ${innerVar} < n; ${innerVar}++) {\n    performConstantWork(${outerVar}, ${innerVar});\n  }\n}\n\`\`\``;
-      const correct = 'O(n^2)';
-      const distractors = ['O(n)', 'O(n log n)', 'O(2^n)'];
-      return { questionText, correct, distractors };
+      const size = randomChoice([16, 32, 64]);
+      return {
+        questionText: `In a sorted array of ${size} elements, what is the maximum number of comparisons Binary Search makes?`,
+        correct: `${Math.ceil(Math.log2(size)) + 1}`,
+        distractors: [`${size / 2}`, `${size}`, `${Math.ceil(Math.log2(size))}`],
+      };
     },
-    // 3. Dynamic Array Resizing Calculation
-    () => {
-      const initialCap = randomChoice([2, 4, 8]);
-      const pushCount = initialCap * 3 + randomInt(1, 3);
-      // Calculate capacity: doubles when full
-      let cap = initialCap;
-      while (cap < pushCount) {
-        cap *= 2;
-      }
-      const questionText = `A dynamic array starts with an initial capacity of ${initialCap} and doubles its capacity whenever it is saturated. If you push ${pushCount} elements into an initially empty array, what is its final allocated capacity?`;
-      const correct = `${cap}`;
-      const distractors = [`${cap / 2}`, `${pushCount}`, `${cap * 2}`];
-      return { questionText, correct, distractors };
-    },
-    // 4. Binary Search Step Calculation
-    () => {
-      const size = randomChoice([16, 32, 64, 128, 256]);
-      const maxSteps = Math.ceil(Math.log2(size));
-      const questionText = `In a sorted array containing exactly ${size} distinct elements, what is the maximum number of comparisons required by standard Binary Search in the worst case?`;
-      const correct = `${maxSteps + 1} (or ${maxSteps} comparisons)`;
-      const distractors = [`${size / 2}`, `${size}`, `${maxSteps * 2}`];
-      return { questionText, correct, distractors };
-    },
-    // 5. Contiguous Memory vs Node References
-    () => {
-      const structure = randomChoice(['Array', 'Singly Linked List']);
-      const isArray = structure === 'Array';
-      const questionText = `Which of the following operations is O(1) in a standard ${structure}?`;
-      const correct = isArray
-        ? 'Direct element access by index (e.g., arr[i])'
-        : 'Inserting a new node at the head pointer';
-      const distractors = isArray
-        ? [
-            'Inserting an element at index 0 in an array of size n without pre-allocated buffer',
-            'Searching for an arbitrary value in an unsorted array',
-            'Deleting an element from the middle of the array without leaving gaps',
-          ]
-        : [
-            'Accessing the k-th node by integer index from the head',
-            'Binary search on the elements',
-            'Deleting the last node with only a head pointer',
-          ];
-      return { questionText, correct, distractors };
-    },
-    // 6. Stack & Queue FIFO/LIFO Sequence
-    () => {
-      const nums = [randomInt(10, 20), randomInt(21, 30), randomInt(31, 40)];
-      const questionText = `The values [${nums.join(', ')}] are pushed onto an empty Stack in that order. One element is popped, then value ${randomInt(50, 60)} is pushed. Finally, two elements are popped. Which element was popped FIRST?`;
-      const correct = `${nums[2]}`;
-      const distractors = [`${nums[0]}`, `${nums[1]}`, 'The stack is empty'];
-      return { questionText, correct, distractors };
-    },
-    // 7. Amortized Analysis Concept
-    () => {
-      const questionText = `Why is the append (push) operation in a dynamic array classified as O(1) amortized, even though individual resizes require O(n) element copies?`;
-      const correct = 'Expensive O(n) doubling operations occur so infrequently that the average cost per operation is constant';
-      const distractors = [
-        'Memory allocation hardware never performs physical copies',
-        'Dynamic arrays use linked pointers under the hood',
-        'The operating system ignores the time spent during heap reallocations',
-      ];
-      return { questionText, correct, distractors };
-    },
+    () => ({
+      questionText: 'Which sorting algorithm has O(n log n) average-case complexity?',
+      correct: 'Merge Sort',
+      distractors: ['Bubble Sort', 'Insertion Sort', 'Selection Sort'],
+    }),
+    () => ({
+      questionText: 'What does O(1) space complexity mean?',
+      correct: 'The algorithm uses a fixed amount of memory regardless of input size',
+      distractors: [
+        'The algorithm runs in constant time',
+        'The algorithm never allocates memory',
+        'The algorithm uses O(n) memory in best case',
+      ],
+    }),
+    () => ({
+      questionText: 'In a Queue (FIFO), which operation removes an element?',
+      correct: 'Dequeue (from front)',
+      distractors: ['Pop (from top)', 'Delete (from back)', 'Shift (from tail)'],
+    }),
   ],
-
-  // ===============================================
-  // INTERMEDIATE TIER DYNAMIC QUESTION GENERATORS
-  // ===============================================
   intermediate: [
-    // 1. Linked List Cycle Detection
-    () => {
-      const fastSpeed = 2;
-      const slowSpeed = 1;
-      const questionText = `In Floyd's Cycle-Finding Algorithm (Tortoise and Hare), the slow pointer advances 1 node per step while the fast pointer advances ${fastSpeed} nodes per step. If a linked list has a cycle of length C, what guarantees that the two pointers will meet?`;
-      const correct = 'The distance between fast and slow decreases by 1 in modulo C at each step';
-      const distractors = [
-        'The fast pointer resets to the head whenever it reaches the cycle tail',
-        'Both pointers hash node memory addresses into an auxiliary table',
-        'The cycle length is always a prime number',
-      ];
-      return { questionText, correct, distractors };
-    },
-    // 2. Binary Search Tree In-Order & Height
-    () => {
-      const keys = [10, 5, 15, 2, 7, 12, 20].sort(() => Math.random() - 0.5);
-      const questionText = `Suppose the following integer keys are inserted in order into an initially empty Binary Search Tree (BST): [${keys.join(', ')}]. Which traversal sequence is GUARANTEED to produce the keys in strictly increasing order?`;
-      const correct = 'In-Order Traversal (Left -> Root -> Right)';
-      const distractors = [
-        'Pre-Order Traversal (Root -> Left -> Right)',
-        'Post-Order Traversal (Left -> Right -> Root)',
-        'Level-Order Traversal (BFS Breadth-First)',
-      ];
-      return { questionText, correct, distractors };
-    },
-    // 3. Monotonic Stack Next Greater Element
-    () => {
-      const arr = [2, 1, 5, 3, 6];
-      const target = 5;
-      const nextGreater = 6;
-      const questionText = `Using a Monotonic Decreasing Stack on the sequence [${arr.join(', ')}], what is the "Next Greater Element" to the right for the number ${target}?`;
-      const correct = `${nextGreater}`;
-      const distractors = ['3', '2', '-1 (No greater element)'];
-      return { questionText, correct, distractors };
-    },
-    // 4. AVL Tree Balance Factor Calculation
+    () => ({
+      questionText: "Why does Floyd's Cycle Detection (Tortoise and Hare) work for detecting cycles in linked lists?",
+      correct: 'The fast pointer catches up to the slow pointer within the cycle at rate of 1 node per step',
+      distractors: [
+        'The fast pointer hashes node addresses to a set',
+        'Both pointers reset to head after C steps',
+        'The slow pointer marks visited nodes with a flag',
+      ],
+    }),
+    () => ({
+      questionText: 'Which tree traversal produces a sorted sequence from a Binary Search Tree?',
+      correct: 'In-Order (Left → Root → Right)',
+      distractors: ['Pre-Order (Root → Left → Right)', 'Post-Order (Left → Right → Root)', 'Level-Order (BFS)'],
+    }),
     () => {
       const leftH = randomInt(2, 4);
       const rightH = leftH + 2;
-      const balanceFactor = leftH - rightH;
-      const questionText = `In an AVL Tree node N, the height of the left subtree is ${leftH} and the height of the right subtree is ${rightH}. What is the balance factor of node N, and does it require rebalancing?`;
-      const correct = `Balance Factor = ${balanceFactor}; Rebalancing (Rotation) is REQUIRED`;
-      const distractors = [
-        `Balance Factor = ${balanceFactor}; No rotation required (within [-1, 1])`,
-        `Balance Factor = 0; The tree is perfectly balanced`,
-        `Balance Factor = +${Math.abs(balanceFactor)}; Left rotation is prohibited`,
-      ];
-      return { questionText, correct, distractors };
+      return {
+        questionText: `An AVL tree node has left subtree height ${leftH} and right subtree height ${rightH}. What is its balance factor and does it need rebalancing?`,
+        correct: `Balance factor = ${leftH - rightH}; rotation required`,
+        distractors: [
+          `Balance factor = 0; no rotation`,
+          `Balance factor = ${rightH - leftH}; no rotation`,
+          `Balance factor = ${leftH - rightH}; no rotation`,
+        ],
+      };
     },
-    // 5. MergeSort vs QuickSort Space/Time Invariant
+    () => ({
+      questionText: 'Why is QuickSort typically preferred over MergeSort for arrays in practice?',
+      correct: 'QuickSort has better cache locality and lower constant factors despite the same average O(n log n)',
+      distractors: [
+        'QuickSort is always O(n log n) even in the worst case',
+        'MergeSort cannot handle duplicate elements',
+        'QuickSort requires O(n) extra memory',
+      ],
+    }),
     () => {
-      const questionText = `Why is standard MergeSort preferred over standard QuickSort for sorting linked lists?`;
-      const correct = 'MergeSort does not require random access memory indexing and can merge linked nodes with O(1) extra space';
-      const distractors = [
-        'QuickSort is asymptotically O(n^3) on linked lists',
-        'MergeSort requires no pointer comparisons',
-        'Linked lists cannot have pivot elements chosen',
-      ];
-      return { questionText, correct, distractors };
+      const idx = randomChoice([3, 4, 5]);
+      return {
+        questionText: `In a 0-indexed binary heap array, what are the parent and left child indices for node at index ${idx}?`,
+        correct: `Parent: ${Math.floor((idx - 1) / 2)}, Left Child: ${2 * idx + 1}`,
+        distractors: [
+          `Parent: ${idx - 1}, Left Child: ${idx + 1}`,
+          `Parent: ${Math.floor(idx / 2)}, Left Child: ${2 * idx}`,
+          `Parent: ${Math.floor((idx - 1) / 2)}, Left Child: ${2 * idx + 2}`,
+        ],
+      };
     },
-    // 6. Heap Array Index Formula
-    () => {
-      const idx = randomChoice([3, 4, 5, 6]);
-      const parentIdx = Math.floor((idx - 1) / 2);
-      const leftChild = 2 * idx + 1;
-      const rightChild = 2 * idx + 2;
-      const questionText = `In a 0-indexed binary heap array representation, what are the parent and left child indices for a node residing at index ${idx}?`;
-      const correct = `Parent: ${parentIdx}, Left Child: ${leftChild}`;
-      const distractors = [
-        `Parent: ${idx - 1}, Left Child: ${idx + 1}`,
-        `Parent: ${Math.floor(idx / 2)}, Left Child: ${2 * idx}`,
-        `Parent: ${parentIdx + 1}, Left Child: ${rightChild}`,
-      ];
-      return { questionText, correct, distractors };
-    },
+    () => ({
+      questionText: 'What is the time complexity of inserting a key into a Hash Table with a good hash function (average case)?',
+      correct: 'O(1)',
+      distractors: ['O(log n)', 'O(n)', 'O(n log n)'],
+    }),
   ],
-
-  // ===========================================
-  // ADVANCED TIER DYNAMIC QUESTION GENERATORS
-  // ===========================================
   advanced: [
-    // 1. Dynamic Programming State Definition
+    () => ({
+      questionText: 'Why does Dijkstra\'s algorithm fail on graphs with negative edge weights?',
+      correct: "It assumes a node's shortest distance is finalized once extracted from the priority queue, which negative weights can invalidate",
+      distractors: [
+        'It converts negative weights to positive values causing overflow',
+        'It only works on directed acyclic graphs',
+        'Negative weights cause the priority queue to throw exceptions',
+      ],
+    }),
     () => {
       const capacity = randomInt(10, 30);
-      const items = randomInt(4, 8);
-      const questionText = `In the classic 0/1 Knapsack Problem with ${items} items and total capacity W = ${capacity}, what does the table entry dp[i][w] represent?`;
-      const correct = 'The maximum value achievable using a subset of the first i items with a maximum weight limit of w';
-      const distractors = [
-        'The exact number of permutations that sum up to capacity w',
-        'The minimum weight required to achieve value i',
-        'The greedy ratio of item i divided by weight w',
-      ];
-      return { questionText, correct, distractors };
+      return {
+        questionText: `In the 0/1 Knapsack Problem with capacity W=${capacity}, what does dp[i][w] represent?`,
+        correct: 'Maximum value achievable using the first i items with weight limit w',
+        distractors: [
+          'Minimum weight to achieve value i',
+          'Number of permutations summing to w',
+          'Greedy ratio of item i to weight w',
+        ],
+      };
     },
-    // 2. Dijkstra vs Bellman-Ford Negative Weights
-    () => {
-      const questionText = `Why does Dijkstra’s algorithm fail when applied to graphs with negative edge weights, whereas the Bellman-Ford algorithm succeeds?`;
-      const correct = 'Dijkstra assumes a vertex’s finalized distance can never decrease upon subsequent edge relaxations, which is violated by negative weights';
-      const distractors = [
-        'Dijkstra’s algorithm converts all negative numbers to positive NaN values',
-        'Bellman-Ford operates exclusively on trees rather than general graphs',
-        'Negative edges cause priority queues to throw hardware memory faults',
-      ];
-      return { questionText, correct, distractors };
-    },
-    // 3. Disjoint Set Union (DSU) Inverse Ackermann
-    () => {
-      const questionText = `What enables Disjoint Set Union (Union-Find) with path compression and union by rank to achieve an amortized per-operation complexity of O(α(n))?`;
-      const correct = 'Path compression flattens tree depth directly to the root, while union by rank prevents tall tree skewing';
-      const distractors = [
-        'It converts trees into binary search heaps at each find query',
-        'It stores all sets in contiguous L1 CPU cache lines',
-        'It eliminates pointer traversals through hardware vectorization',
-      ];
-      return { questionText, correct, distractors };
-    },
-    // 4. Consistent Hashing Remapping Ratio
-    () => {
-      const totalNodes = randomChoice([10, 20, 50, 100]);
-      const questionText = `In a distributed caching cluster utilizing Consistent Hashing with ${totalNodes} nodes, if 1 node fails or is removed, what fraction of keys K must be remapped across the remaining cluster on average?`;
-      const correct = `Approximately 1/${totalNodes} of keys (K/${totalNodes})`;
-      const distractors = [
-        `All keys (100% of K)`,
-        `Approximately 50% of all keys`,
-        `Exactly zero keys`,
-      ];
-      return { questionText, correct, distractors };
-    },
-    // 5. A* Heuristic Admissibility & Consistency
-    () => {
-      const questionText = `In the A* search algorithm, what is the consequence if the heuristic function h(n) is NOT admissible (i.e., it overestimates the true cost to reach the goal)?`;
-      const correct = 'The algorithm is no longer guaranteed to return the optimal (shortest) path';
-      const distractors = [
-        'The algorithm will enter an infinite cycle and fail to terminate',
-        'Execution time increases exponentially to O(n!)',
-        'The algorithm degenerates into Breadth-First Search (BFS)',
-      ];
-      return { questionText, correct, distractors };
-    },
-    // 6. Lock-Free CAS & ABA Problem
-    () => {
-      const questionText = `In concurrent lock-free programming, what is the "ABA Problem" encountered when using atomic Compare-And-Swap (CAS)?`;
-      const correct = 'A memory location is read as value A, changed to B, and restored to A, causing a CAS operation to succeed despite unobserved intermediate state mutations';
-      const distractors = [
-        'Two threads attempt to acquire the same mutex simultaneously causing deadlock',
-        'A thread reads an unaligned 64-bit integer causing memory segmentation faults',
-        'Memory addresses wrap around zero during high-throughput allocation',
-      ];
-      return { questionText, correct, distractors };
-    },
+    () => ({
+      questionText: 'What enables DSU (Disjoint Set Union) with path compression and union by rank to achieve O(α(n)) amortized per-operation?',
+      correct: 'Path compression flattens tree depth and union by rank prevents tree skewing, keeping height nearly constant',
+      distractors: [
+        'It uses a balanced BST internally for set membership',
+        'It stores all elements contiguously in L1 cache',
+        'It hashes set identifiers for O(1) lookup',
+      ],
+    }),
+    () => ({
+      questionText: "In A* search, what happens if the heuristic function h(n) is NOT admissible (overestimates true cost)?",
+      correct: 'A* is no longer guaranteed to find the optimal path',
+      distractors: [
+        'A* enters an infinite loop',
+        'A* degenerates to BFS',
+        'A* runs in O(n!) time',
+      ],
+    }),
+    () => ({
+      questionText: 'What is the ABA problem in lock-free concurrent programming with Compare-And-Swap (CAS)?',
+      correct: 'A value changes A→B→A between a read and CAS, causing the CAS to succeed despite unobserved intermediate mutations',
+      distractors: [
+        'Two threads acquire the same mutex causing deadlock',
+        'Unaligned memory access causes segmentation fault',
+        'Memory addresses wrap around during allocation',
+      ],
+    }),
+    () => ({
+      questionText: 'In consistent hashing with N nodes, what fraction of keys must be remapped on average when 1 node is removed?',
+      correct: '1/N of all keys',
+      distractors: ['All keys (100%)', '50% of keys', '0 keys'],
+    }),
   ],
 };
 
-/**
- * Procedurally synthesizes a single dynamic question for a difficulty tier
- */
-export function generateQuestion(difficulty, courseId, moduleId = null) {
-  const tierGenerators = dynamicGenerators[difficulty] || dynamicGenerators.beginner;
-  const generator = randomChoice(tierGenerators);
-  const { questionText, correct, distractors } = generator();
+// ---------------------------------------------------------------------------
+// GEMINI AI QUESTION GENERATION
+// ---------------------------------------------------------------------------
+async function generateWithGemini(courseTitle, difficulty, count) {
+  try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.log('GEMINI_API_KEY not set, using static questions');
+      return null;
+    }
 
-  // Combine and shuffle options
-  const optionLetters = ['A', 'B', 'C', 'D'];
-  const allOptions = [correct, ...distractors.slice(0, 3)];
-  const shuffledOptions = shuffleArray(allOptions);
+    const { GoogleGenAI } = await import('@google/genai');
+    const ai = new GoogleGenAI({ apiKey });
 
-  const correctIndex = shuffledOptions.indexOf(correct);
-  const correctOptionLetter = optionLetters[correctIndex];
+    const difficultyGuide = {
+      beginner: 'fundamental concepts, data structures basics (arrays, stacks, queues, sorting), simple complexity analysis',
+      intermediate: 'BST, AVL trees, hash tables, graph traversal, heap operations, algorithm design patterns',
+      advanced: 'dynamic programming, graph algorithms (Dijkstra, Bellman-Ford), concurrency, distributed systems, amortized analysis',
+    };
+
+    const prompt = `You are an expert computer science educator creating a ${difficulty}-level diagnostic exam for a course on "${courseTitle}".
+
+Generate exactly ${count} multiple-choice questions about ${difficultyGuide[difficulty]}.
+
+Requirements:
+- Questions must be technical, specific, and unambiguous
+- Each question must have exactly 4 options labeled A, B, C, D
+- Exactly ONE correct answer per question
+- Wrong answers (distractors) must be plausible but clearly incorrect
+- No repeated questions
+- Questions should vary in topic within the ${difficulty} tier
+
+Respond with ONLY a valid JSON array (no markdown, no explanation):
+[
+  {
+    "questionText": "The full question text here",
+    "optionA": "First option",
+    "optionB": "Second option",
+    "optionC": "Third option",
+    "optionD": "Fourth option",
+    "correctOption": "A"
+  }
+]`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.6-flash',
+      contents: prompt,
+      config: { temperature: 0.7, maxOutputTokens: 4096 },
+    });
+
+    const raw = response.text?.trim() || '';
+    // Strip markdown code fences if present
+    const jsonText = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+    const parsed = JSON.parse(jsonText);
+
+    if (!Array.isArray(parsed) || parsed.length === 0) return null;
+
+    return parsed.slice(0, count).map((q) => ({
+      id: crypto.randomUUID(),
+      difficulty,
+      questionText: q.questionText,
+      optionA: q.optionA,
+      optionB: q.optionB,
+      optionC: q.optionC,
+      optionD: q.optionD,
+      correctOption: (q.correctOption || 'A').toUpperCase(),
+    }));
+  } catch (err) {
+    console.error('Gemini question generation failed, falling back to static:', err.message);
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// STATIC FALLBACK GENERATOR
+// ---------------------------------------------------------------------------
+function generateStaticQuestion(difficulty, courseId, moduleId = null) {
+  const generators = staticGenerators[difficulty] || staticGenerators.beginner;
+  const gen = randomChoice(generators);
+  const { questionText, correct, distractors } = gen();
+
+  const allOptions = shuffleArray([correct, ...distractors.slice(0, 3)]);
+  const correctIndex = allOptions.indexOf(correct);
+  const letters = ['A', 'B', 'C', 'D'];
 
   return {
     id: crypto.randomUUID(),
@@ -283,83 +266,113 @@ export function generateQuestion(difficulty, courseId, moduleId = null) {
     moduleId,
     difficulty,
     questionText,
-    optionA: shuffledOptions[0],
-    optionB: shuffledOptions[1],
-    optionC: shuffledOptions[2],
-    optionD: shuffledOptions[3],
-    correctOption: correctOptionLetter,
+    optionA: allOptions[0],
+    optionB: allOptions[1],
+    optionC: allOptions[2],
+    optionD: allOptions[3],
+    correctOption: letters[correctIndex],
   };
 }
 
+// ---------------------------------------------------------------------------
+// PUBLIC API
+// ---------------------------------------------------------------------------
+
 /**
- * Generate 15 dynamic questions for the Entrance Exam (5 Beginner, 5 Intermediate, 5 Advanced)
- * and persist them to the database question_bank
+ * Generate a single question (used for periodic exams)
+ */
+export function generateQuestion(difficulty, courseId, moduleId = null) {
+  return generateStaticQuestion(difficulty, courseId, moduleId);
+}
+
+/**
+ * Generate 15 dynamic questions for the Entrance Exam
+ * Tries Gemini AI first, falls back to static generators
  */
 export async function generateDynamicEntranceQuestions(courseId) {
+  // Get course title for Gemini context
+  let courseTitle = 'Computer Science and Data Structures';
+  try {
+    const courseRes = await pool.query('SELECT title FROM courses WHERE id = $1', [courseId]);
+    if (courseRes.rows.length > 0) courseTitle = courseRes.rows[0].title;
+  } catch (_) {}
+
+  const tiers = [
+    { difficulty: 'beginner', count: 5 },
+    { difficulty: 'intermediate', count: 5 },
+    { difficulty: 'advanced', count: 5 },
+  ];
+
   const generated = [];
 
-  // Generate 5 Beginner
-  for (let i = 0; i < 5; i++) {
-    generated.push(generateQuestion('beginner', courseId));
-  }
-  // Generate 5 Intermediate
-  for (let i = 0; i < 5; i++) {
-    generated.push(generateQuestion('intermediate', courseId));
-  }
-  // Generate 5 Advanced
-  for (let i = 0; i < 5; i++) {
-    generated.push(generateQuestion('advanced', courseId));
+  for (const { difficulty, count } of tiers) {
+    // Try AI generation first
+    const aiQuestions = await generateWithGemini(courseTitle, difficulty, count);
+
+    if (aiQuestions && aiQuestions.length >= count) {
+      // AI generated — add courseId
+      aiQuestions.slice(0, count).forEach((q) => {
+        generated.push({ ...q, courseId, moduleId: null });
+      });
+      console.log(`✅ Gemini generated ${count} ${difficulty} questions for "${courseTitle}"`);
+    } else {
+      // Static fallback
+      for (let i = 0; i < count; i++) {
+        generated.push(generateStaticQuestion(difficulty, courseId));
+      }
+      console.log(`📚 Static fallback: ${count} ${difficulty} questions`);
+    }
   }
 
-  // Persist all 15 generated questions into the question_bank
+  // Persist all 15 questions into question_bank
   for (const q of generated) {
-    await pool.query(
-      `INSERT INTO question_bank (id, course_id, module_id, difficulty, question_text, option_a, option_b, option_c, option_d, correct_option)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-      [
-        q.id,
-        q.courseId,
-        q.moduleId,
-        q.difficulty,
-        q.questionText,
-        q.optionA,
-        q.optionB,
-        q.optionC,
-        q.optionD,
-        q.correctOption,
-      ]
-    );
+    try {
+      await pool.query(
+        `INSERT INTO question_bank (id, course_id, module_id, difficulty, question_text, option_a, option_b, option_c, option_d, correct_option)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        [q.id, q.courseId, q.moduleId, q.difficulty, q.questionText, q.optionA, q.optionB, q.optionC, q.optionD, q.correctOption]
+      );
+    } catch (err) {
+      console.error('Failed to persist question:', err.message);
+    }
   }
 
   return generated;
 }
 
 /**
- * Generate dynamic questions for periodic module evaluation (5 questions matching the module difficulty)
+ * Generate dynamic questions for periodic module evaluation
  */
 export async function generateDynamicPeriodicQuestions(courseId, moduleId, difficulty, count = 5) {
+  let courseTitle = 'Computer Science';
+  try {
+    const courseRes = await pool.query('SELECT title FROM courses WHERE id = $1', [courseId]);
+    if (courseRes.rows.length > 0) courseTitle = courseRes.rows[0].title;
+  } catch (_) {}
+
+  const aiQuestions = await generateWithGemini(courseTitle, difficulty, count);
   const generated = [];
-  for (let i = 0; i < count; i++) {
-    generated.push(generateQuestion(difficulty, courseId, moduleId));
+
+  if (aiQuestions && aiQuestions.length >= count) {
+    aiQuestions.slice(0, count).forEach((q) => {
+      generated.push({ ...q, courseId, moduleId });
+    });
+  } else {
+    for (let i = 0; i < count; i++) {
+      generated.push(generateStaticQuestion(difficulty, courseId, moduleId));
+    }
   }
 
   for (const q of generated) {
-    await pool.query(
-      `INSERT INTO question_bank (id, course_id, module_id, difficulty, question_text, option_a, option_b, option_c, option_d, correct_option)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-      [
-        q.id,
-        q.courseId,
-        q.moduleId,
-        q.difficulty,
-        q.questionText,
-        q.optionA,
-        q.optionB,
-        q.optionC,
-        q.optionD,
-        q.correctOption,
-      ]
-    );
+    try {
+      await pool.query(
+        `INSERT INTO question_bank (id, course_id, module_id, difficulty, question_text, option_a, option_b, option_c, option_d, correct_option)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        [q.id, q.courseId, q.moduleId, q.difficulty, q.questionText, q.optionA, q.optionB, q.optionC, q.optionD, q.correctOption]
+      );
+    } catch (err) {
+      console.error('Failed to persist periodic question:', err.message);
+    }
   }
 
   return generated;

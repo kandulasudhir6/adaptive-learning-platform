@@ -2,22 +2,22 @@
 
 @layer base {
   body {
-    @apply bg-slate-900 text-slate-100 antialiased min-h-screen font-sans selection:bg-indigo-500 selection:text-white;
+    @apply bg-gray-50 text-gray-900 antialiased min-h-screen font-sans selection:bg-indigo-600 selection:text-white;
   }
 }
 
-/* Custom subtle scrollbar */
+/* Custom subtle light scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #f8fafc;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #94a3b8;
 }

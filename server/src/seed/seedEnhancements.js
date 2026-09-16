@@ -1,0 +1,298 @@
+import crypto from 'node:crypto';
+import bcrypt from 'bcryptjs';
+import pool, { initSchema, rawDb } from '../config/db.js';
+
+export async function seedEnhancements() {
+  console.log('🔄 Initializing enhanced schema and tables...');
+  initSchema();
+
+  const passwordHash = await bcrypt.hash('password123', 10);
+
+  // 1. Ensure faculty accounts
+  const robert = rawDb.prepare("SELECT id FROM users WHERE email = 'dr.jenkins@faculty.com'").get();
+  let robertId = robert?.id;
+  if (!robertId) {
+    robertId = crypto.randomUUID();
+    rawDb.prepare(`
+      INSERT INTO users (id, first_name, last_name, email, password_hash, role)
+      VALUES (?, 'Robert', 'Vance', 'dr.jenkins@faculty.com', ?, 'faculty')
+    `).run(robertId, passwordHash);
+  }
+
+  // Convert or create Sarah as faculty
+  const sarah = rawDb.prepare("SELECT id FROM users WHERE email IN ('prof.sarah@mentor.com', 'prof.sarah@faculty.com')").get();
+  let sarahId = sarah?.id;
+  if (!sarahId) {
+    sarahId = crypto.randomUUID();
+    rawDb.prepare(`
+      INSERT INTO users (id, first_name, last_name, email, password_hash, role)
+      VALUES (?, 'Sarah', 'Jenkins', 'prof.sarah@faculty.com', ?, 'faculty')
+    `).run(sarahId, passwordHash);
+  } else {
+    rawDb.prepare("UPDATE users SET role = 'faculty', email = 'prof.sarah@faculty.com' WHERE id = ?").run(sarahId);
+  }
+
+  // 2. Fetch student IDs
+  const alex = rawDb.prepare("SELECT id FROM users WHERE email = 'alex@student.com'").get();
+  const maria = rawDb.prepare("SELECT id FROM users WHERE email = 'maria@student.com'").get();
+  const alexId = alex?.id;
+  const mariaId = maria?.id;
+
+  // 3. Seed Faculty Specialized Subjects
+  rawDb.prepare("DELETE FROM faculty_subjects").run();
+
+  const subjects = [
+    {
+      id: crypto.randomUUID(),
+      faculty_id: robertId,
+      subject_name: 'Advanced Data Structures & Algorithmic Complexity',
+      category: 'Computer Science',
+      description: 'Asymptotic analysis, memory layout, red-black & AVL self-balancing trees, and graph flow networks.',
+    },
+    {
+      id: crypto.randomUUID(),
+      faculty_id: robertId,
+      subject_name: 'Distributed Systems, Consensus & Fault Tolerance',
+      category: 'Systems Architecture',
+      description: 'Paxos, Raft consensus, consistent hashing rings, and lock-free concurrent primitives.',
+    },
+    {
+      id: crypto.randomUUID(),
+      faculty_id: sarahId,
+      subject_name: 'Full-Stack Modern Web Architecture & Scalability',
+      category: 'Software Engineering',
+      description: 'High-throughput microservices, edge caching, reactive state machines, and relational database indexing.',
+    },
+    {
+      id: crypto.randomUUID(),
+      faculty_id: sarahId,
+      subject_name: 'Database Schema Optimization & Query Execution Plans',
+      category: 'Database Systems',
+      description: 'Relational calculus, query optimizer internals, B+ Tree index design, and ACID guarantees.',
+    },
+  ];
+
+  for (const sub of subjects) {
+    rawDb.prepare(`
+      INSERT INTO faculty_subjects (id, faculty_id, subject_name, category, description)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(sub.id, sub.faculty_id, sub.subject_name, sub.category, sub.description);
+  }
+
+  // 4. Seed Coding Challenges for CodeTantra arena
+  const courseCs101 = rawDb.prepare("SELECT id FROM courses WHERE code = 'CS101'").get();
+  const courseId = courseCs101?.id;
+
+  if (courseId) {
+    rawDb.prepare("DELETE FROM coding_challenges").run();
+
+    const challenges = [
+      {
+        id: crypto.randomUUID(),
+        course_id: courseId,
+        difficulty: 'beginner',
+        title: 'Two Sum Target Identifier',
+        description: `Given an array of integers \`nums\` and an integer \`target\`, return the **indices** of the two numbers such that they add up to \`target\`.
+
+### Constraints:
+- Each input will have exactly one solution.
+- You may not use the same element twice.
+- Return the indices in an array \`[index1, index2]\`.
+
+### Example 1:
+\`\`\`
+Input: nums = [2, 7, 11, 15], target = 9
+Output: [0, 1]
+Explanation: nums[0] + nums[1] == 9, return [0, 1].
+\`\`\`
+`,
+        starter_code: `/**
+ * @param {number[]} nums
+ * @param {number} target
+ * @return {number[]}
+ */
+function twoSum(nums, target) {
+  // Write your code here
+  const map = new Map();
+  for (let i = 0; i < nums.length; i++) {
+    const complement = target - nums[i];
+    if (map.has(complement)) {
+      return [map.get(complement), i];
+    }
+    map.set(nums[i], i);
+  }
+  return [];
+}
+`,
+        test_cases_json: JSON.stringify([
+          { id: 1, input: [[2, 7, 11, 15], 9], expected: [0, 1], isHidden: false },
+          { id: 2, input: [[3, 2, 4], 6], expected: [1, 2], isHidden: false },
+          { id: 3, input: [[3, 3], 6], expected: [0, 1], isHidden: false },
+          { id: 4, input: [[1, 4, 8, 11, 19], 20], expected: [0, 4], isHidden: true },
+        ]),
+        hints: 'Try using a Hash Map to store previously visited numbers and their indices for O(n) lookup.',
+        round: 1,
+      },
+      {
+        id: crypto.randomUUID(),
+        course_id: courseId,
+        difficulty: 'intermediate',
+        title: 'Valid Parentheses Syntax Matcher',
+        description: `Given a string \`s\` containing just the characters \`'('\`, \`')'\`, \`'{'\`, \`'}'\`, \`'['\` and \`']'\`, determine if the input string is valid.
+
+### Invariant Rules:
+1. Open brackets must be closed by the same type of brackets.
+2. Open brackets must be closed in the correct order.
+3. Every close bracket has a corresponding open bracket of the same type.
+
+### Example:
+\`\`\`
+Input: s = "()[]{}" -> Output: true
+Input: s = "(]" -> Output: false
+\`\`\`
+`,
+        starter_code: `/**
+ * @param {string} s
+ * @return {boolean}
+ */
+function isValid(s) {
+  const stack = [];
+  const map = { ')': '(', '}': '{', ']': '[' };
+
+  for (let char of s) {
+    if (char === '(' || char === '{' || char === '[') {
+      stack.push(char);
+    } else if (map[char]) {
+      if (stack.pop() !== map[char]) return false;
+    }
+  }
+
+  return stack.length === 0;
+}
+`,
+        test_cases_json: JSON.stringify([
+          { id: 1, input: ['()'], expected: true, isHidden: false },
+          { id: 2, input: ['()[]{}'], expected: true, isHidden: false },
+          { id: 3, input: ['(]'], expected: false, isHidden: false },
+          { id: 4, input: ['([)]'], expected: false, isHidden: true },
+          { id: 5, input: ['{[]}'], expected: true, isHidden: true },
+        ]),
+        hints: 'A LIFO Stack is ideal for checking opening and matching closing brackets.',
+        round: 2,
+      },
+      {
+        id: crypto.randomUUID(),
+        course_id: courseId,
+        difficulty: 'advanced',
+        title: 'Longest Common Subsequence (DP)',
+        description: `Given two strings \`text1\` and \`text2\`, return the **length** of their longest common subsequence. If there is no common subsequence, return \`0\`.
+
+A **subsequence** is a sequence derived from the original string by deleting some (possibly zero) characters without changing the relative order.
+
+### Example:
+\`\`\`
+Input: text1 = "abcde", text2 = "ace"
+Output: 3
+Explanation: The LCS is "ace" which has length 3.
+
+Input: text1 = "abc", text2 = "abc"
+Output: 3
+
+Input: text1 = "abc", text2 = "def"
+Output: 0
+\`\`\`
+
+### Constraints:
+- 1 <= text1.length, text2.length <= 1000
+- Expected Time Complexity: O(m x n)
+`,
+        starter_code: `/**
+ * @param {string} text1
+ * @param {string} text2
+ * @return {number}
+ */
+function longestCommonSubsequence(text1, text2) {
+  const m = text1.length;
+  const n = text2.length;
+
+  // Build a 2D DP table
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (text1[i - 1] === text2[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1] + 1;
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+      }
+    }
+  }
+
+  return dp[m][n];
+}
+`,
+        test_cases_json: JSON.stringify([
+          { id: 1, input: ['abcde', 'ace'], expected: 3, isHidden: false },
+          { id: 2, input: ['abc', 'abc'], expected: 3, isHidden: false },
+          { id: 3, input: ['abc', 'def'], expected: 0, isHidden: false },
+          { id: 4, input: ['oxcpqrsvwf', 'shmtulqrypy'], expected: 2, isHidden: true },
+          { id: 5, input: ['bsbininm', 'jmjkbkjkv'], expected: 1, isHidden: true },
+        ]),
+        hints: 'Use 2D Dynamic Programming. dp[i][j] = length of LCS of text1[0..i-1] and text2[0..j-1].',
+        round: 3,
+      },
+    ];
+
+    for (const c of challenges) {
+      rawDb.prepare(`
+        INSERT INTO coding_challenges (id, course_id, difficulty, title, description, starter_code, test_cases_json, hints)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(c.id, c.course_id, c.difficulty, c.title, c.description, c.starter_code, c.test_cases_json, c.hints);
+    }
+  }
+
+  // 5. Seed day-to-day login logs for students
+  rawDb.prepare("DELETE FROM user_login_logs").run();
+
+  if (mariaId && robertId) {
+    // Maria chose Dr. Robert Vance as mentor
+    rawDb.prepare(`
+      INSERT OR REPLACE INTO student_course_enrollments (id, student_id, course_id, faculty_id, status)
+      VALUES (?, ?, ?, ?, 'active')
+    `).run(crypto.randomUUID(), mariaId, courseId, robertId);
+
+    // Maria's login logs for last 4 days
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+    const pastLogins = [
+      { time: new Date(now - 3 * dayMs + 10 * 60 * 1000).toISOString(), ip: '192.168.1.45', device: 'Chrome 128 / Windows 11' },
+      { time: new Date(now - 2 * dayMs + 45 * 60 * 1000).toISOString(), ip: '192.168.1.45', device: 'Chrome 128 / Windows 11' },
+      { time: new Date(now - 1 * dayMs + 15 * 60 * 1000).toISOString(), ip: '192.168.1.45', device: 'Chrome 128 / Windows 11' },
+      { time: new Date(now - 2 * 60 * 60 * 1000).toISOString(), ip: '192.168.1.45', device: 'Chrome 128 / Windows 11' },
+    ];
+
+    for (const l of pastLogins) {
+      rawDb.prepare(`
+        INSERT INTO user_login_logs (id, user_id, login_time, ip_address, device_info)
+        VALUES (?, ?, ?, ?, ?)
+      `).run(crypto.randomUUID(), mariaId, l.time, l.ip, l.device);
+    }
+  }
+
+  if (alexId && robertId) {
+    // Alex also chose Dr. Robert Vance
+    rawDb.prepare(`
+      INSERT OR REPLACE INTO student_course_enrollments (id, student_id, course_id, faculty_id, status)
+      VALUES (?, ?, ?, ?, 'active')
+    `).run(crypto.randomUUID(), alexId, courseId, robertId);
+
+    rawDb.prepare(`
+      INSERT INTO user_login_logs (id, user_id, login_time, ip_address, device_info)
+      VALUES (?, ?, CURRENT_TIMESTAMP, '127.0.0.1', 'Chrome 128 / Windows 11 (Student Station)')
+    `).run(crypto.randomUUID(), alexId);
+  }
+
+  console.log('✅ Enhancements seeded: Faculty accounts, Specialized Subjects, CodeTantra Challenges & Day-to-Day Logins!');
+}
+
+seedEnhancements().catch(console.error);
