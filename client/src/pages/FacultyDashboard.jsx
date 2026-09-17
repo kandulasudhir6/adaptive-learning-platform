@@ -80,18 +80,18 @@ function StudentDetailPanel({ student, facultyName, onNotice }) {
 
   const panelBtnClass = (id) =>
     `px-3 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer flex items-center gap-1.5 ${
-      activePanel === id ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:border-indigo-300 hover:text-indigo-700'
+      activePanel === id ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(168,85,247,0.1)]' : 'bg-gray-900 text-gray-400 border border-gray-800 hover:border-indigo-300 hover:text-purple-300'
     }`;
 
   return (
-    <div className="border-t border-gray-200 bg-gray-50/60">
+    <div className="border-t border-gray-800 bg-gray-950/60">
       {/* Panel Switcher */}
       <div className="flex gap-2 p-4 pb-0 flex-wrap">
         <button className={panelBtnClass('profile')} onClick={() => setActivePanel('profile')}>
           <User className="w-3.5 h-3.5" /> Profile
         </button>
         <button className={panelBtnClass('logins')} onClick={() => setActivePanel('logins')}>
-          <Activity className="w-3.5 h-3.5" /> Login Activity {logins && <span className="ml-1 bg-white/20 px-1 rounded text-[10px]">{logins.length}</span>}
+          <Activity className="w-3.5 h-3.5" /> Login Activity {logins && <span className="ml-1 bg-gray-900/20 px-1 rounded text-[10px]">{logins.length}</span>}
         </button>
         <button className={panelBtnClass('roadmap')} onClick={() => setActivePanel('roadmap')}>
           <Map className="w-3.5 h-3.5" /> Roadmap Review
@@ -114,9 +114,9 @@ function StudentDetailPanel({ student, facultyName, onNotice }) {
               { label: 'Total Logins', value: student.total_logins ?? '—' },
               { label: 'Last Login', value: student.last_login_time ? new Date(student.last_login_time).toLocaleString() : 'Never' },
             ].map(({ label, value }) => (
-              <div key={label} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+              <div key={label} className="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
                 <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">{label}</div>
-                <div className="text-sm text-gray-900 font-medium">{value}</div>
+                <div className="text-sm text-gray-100 font-medium">{value}</div>
               </div>
             ))}
           </div>
@@ -126,29 +126,29 @@ function StudentDetailPanel({ student, facultyName, onNotice }) {
         {activePanel === 'logins' && (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-600 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-indigo-600" /> Day-to-Day Login Timeline
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-purple-400" /> Day-to-Day Login Timeline
               </h4>
               {logins && <span className="text-xs text-gray-400">{logins.length} records</span>}
             </div>
             {loadingLogins ? (
-              <div className="flex items-center gap-2 text-gray-500 text-xs py-4">
-                <Loader2 className="w-4 h-4 animate-spin text-indigo-600" /> Loading login history…
+              <div className="flex items-center gap-2 text-gray-400 text-xs py-4">
+                <Loader2 className="w-4 h-4 animate-spin text-purple-400" /> Loading login history…
               </div>
             ) : logins?.length === 0 ? (
-              <div className="text-center py-8 bg-white border border-gray-200 rounded-xl text-gray-400 text-sm">No login records found.</div>
+              <div className="text-center py-8 bg-gray-900 border border-gray-800 rounded-xl text-gray-400 text-sm">No login records found.</div>
             ) : (
               <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                 {logins.map((log, i) => {
                   const ts = log.login_time || log.login_at || log.created_at;
                   const d = ts ? new Date(ts) : null;
                   return (
-                    <div key={i} className="flex items-center gap-3 text-xs p-3 rounded-xl bg-white border border-gray-200 shadow-sm hover:border-indigo-200 transition">
-                      <div className="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                    <div key={i} className="flex items-center gap-3 text-xs p-3 rounded-xl bg-gray-900 border border-gray-800 shadow-[0_0_15px_rgba(168,85,247,0.1)] hover:border-indigo-200 transition">
+                      <div className="w-7 h-7 rounded-lg bg-purple-900/30 border border-purple-900 flex items-center justify-center text-purple-400 shrink-0">
                         <LogIn className="w-3.5 h-3.5" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-gray-800">{d ? d.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : '—'}</div>
+                        <div className="font-semibold text-gray-200">{d ? d.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : '—'}</div>
                         <div className="text-gray-400">{d ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</div>
                       </div>
                       {log.ip_address && <span className="text-gray-300 font-mono text-[11px] shrink-0">{log.ip_address}</span>}
@@ -165,18 +165,18 @@ function StudentDetailPanel({ student, facultyName, onNotice }) {
         {activePanel === 'roadmap' && (
           <div>
             {loadingRoadmap ? (
-              <div className="flex items-center gap-2 text-gray-500 text-xs py-4">
-                <Loader2 className="w-4 h-4 animate-spin text-indigo-600" /> Loading roadmap…
+              <div className="flex items-center gap-2 text-gray-400 text-xs py-4">
+                <Loader2 className="w-4 h-4 animate-spin text-purple-400" /> Loading roadmap…
               </div>
             ) : !roadmap ? (
-              <div className="text-center py-10 bg-white border border-gray-200 rounded-xl text-gray-400 space-y-2">
+              <div className="text-center py-10 bg-gray-900 border border-gray-800 rounded-xl text-gray-400 space-y-2">
                 <Map className="w-8 h-8 mx-auto text-gray-300" />
                 <p className="text-sm">No roadmap yet — student hasn't completed the entrance exam.</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {/* Roadmap Status Bar */}
-                <div className="flex items-center gap-3 flex-wrap p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
+                <div className="flex items-center gap-3 flex-wrap p-4 bg-gray-900 border border-gray-800 rounded-xl shadow-[0_0_15px_rgba(168,85,247,0.1)]">
                   <span className={`text-xs font-bold px-3 py-1.5 rounded-full border ${
                     roadmap.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
                   }`}>
@@ -188,33 +188,33 @@ function StudentDetailPanel({ student, facultyName, onNotice }) {
 
                 {/* Faculty Notes / Edit Panel */}
                 {editingRoadmap ? (
-                  <div className="bg-white border border-indigo-200 rounded-2xl p-5 shadow-sm space-y-4">
-                    <div className="flex items-center gap-2 text-sm font-bold text-gray-800">
-                      <FileEdit className="w-4 h-4 text-indigo-600" /> Review &amp; Customize Roadmap
+                  <div className="bg-gray-900 border border-indigo-200 rounded-2xl p-5 shadow-[0_0_15px_rgba(168,85,247,0.1)] space-y-4">
+                    <div className="flex items-center gap-2 text-sm font-bold text-gray-200">
+                      <FileEdit className="w-4 h-4 text-purple-400" /> Review &amp; Customize Roadmap
                     </div>
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
                         Faculty Guidance Notes &amp; Milestone Adjustments
                       </label>
                       <textarea
                         value={facultyNotes}
                         onChange={(e) => setFacultyNotes(e.target.value)}
                         rows={5}
-                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-300 text-gray-900 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none transition"
+                        className="w-full px-4 py-3 rounded-xl bg-gray-950 border border-gray-300 text-gray-100 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none transition"
                         placeholder="Add milestone customizations, pace adjustments, topic recommendations, or guidance notes for this student…"
                       />
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       <button onClick={() => handleRoadmapSave('approve')} disabled={saving}
-                        className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition disabled:opacity-50 cursor-pointer shadow-sm">
+                        className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition disabled:opacity-50 cursor-pointer shadow-[0_0_15px_rgba(168,85,247,0.1)]">
                         <CheckCircle2 className="w-3.5 h-3.5" /> {saving ? 'Saving…' : 'Approve &amp; Release to Student'}
                       </button>
                       <button onClick={() => handleRoadmapSave('update')} disabled={saving}
-                        className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-gray-700 bg-white border border-gray-300 hover:bg-gray-100 rounded-xl transition disabled:opacity-50 cursor-pointer">
+                        className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-gray-300 bg-gray-900 border border-gray-300 hover:bg-gray-100 rounded-xl transition disabled:opacity-50 cursor-pointer">
                         <Save className="w-3.5 h-3.5" /> Save Notes Only
                       </button>
                       <button onClick={() => setEditingRoadmap(false)}
-                        className="px-4 py-2 text-xs font-semibold text-gray-500 hover:text-gray-800 rounded-xl transition cursor-pointer">
+                        className="px-4 py-2 text-xs font-semibold text-gray-400 hover:text-gray-200 rounded-xl transition cursor-pointer">
                         Cancel
                       </button>
                     </div>
@@ -222,13 +222,13 @@ function StudentDetailPanel({ student, facultyName, onNotice }) {
                 ) : (
                   <div className="flex gap-2">
                     <button onClick={() => { setEditingRoadmap(true); setFacultyNotes(roadmap.faculty_notes || ''); }}
-                      className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition cursor-pointer">
+                      className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-purple-300 bg-purple-900/30 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition cursor-pointer">
                       <Edit3 className="w-3.5 h-3.5" />
                       {roadmap.status === 'approved' ? 'Edit Notes & Milestones' : 'Review & Approve Roadmap'}
                     </button>
                     {roadmap.status !== 'approved' && (
                       <button onClick={() => handleRoadmapSave('approve')} disabled={saving}
-                        className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition cursor-pointer shadow-sm">
+                        className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition cursor-pointer shadow-[0_0_15px_rgba(168,85,247,0.1)]">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Quick Approve
                       </button>
                     )}
@@ -236,7 +236,7 @@ function StudentDetailPanel({ student, facultyName, onNotice }) {
                 )}
 
                 {roadmap.faculty_notes && (
-                  <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-sm text-indigo-800">
+                  <div className="bg-purple-900/30 border border-purple-900 rounded-xl p-4 text-sm text-indigo-800">
                     <div className="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1.5">Your Faculty Notes</div>
                     <p className="leading-relaxed">{roadmap.faculty_notes}</p>
                   </div>
@@ -326,56 +326,56 @@ function DiagnosticExamEditor({ onNotice }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <Brain className="w-5 h-5 text-indigo-600" /> Diagnostic Exam Questions
+          <h3 className="text-lg font-bold text-gray-100 flex items-center gap-2">
+            <Brain className="w-5 h-5 text-purple-400" /> Diagnostic Exam Questions
           </h3>
-          <p className="text-xs text-gray-500 mt-0.5">{questions.length} questions in question bank — edit, correct, or update any question below</p>
+          <p className="text-xs text-gray-400 mt-0.5">{questions.length} questions in question bank — edit, correct, or update any question below</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {['all', 'beginner', 'intermediate', 'advanced'].map((f) => (
             <button key={f} onClick={() => setFilter(f)}
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer capitalize ${
-                filter === f ? 'bg-indigo-600 text-white shadow' : 'bg-white border border-gray-200 text-gray-600 hover:border-indigo-300'
+                filter === f ? 'bg-purple-600 text-white shadow' : 'bg-gray-900 border border-gray-800 text-gray-400 hover:border-indigo-300'
               }`}>
               {f === 'all' ? `All (${questions.length})` : `${f.charAt(0).toUpperCase() + f.slice(1)} (${questions.filter((q) => q.difficulty === f).length})`}
             </button>
           ))}
-          <button onClick={loadQuestions} className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-gray-800 transition cursor-pointer">
+          <button onClick={loadQuestions} className="p-2 rounded-lg bg-gray-900 border border-gray-800 hover:bg-gray-950 text-gray-400 hover:text-gray-200 transition cursor-pointer">
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-16 gap-3 text-gray-500">
-          <Loader2 className="w-6 h-6 animate-spin text-indigo-600" /> Loading questions…
+        <div className="flex items-center justify-center py-16 gap-3 text-gray-400">
+          <Loader2 className="w-6 h-6 animate-spin text-purple-400" /> Loading questions…
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl text-gray-400 shadow-sm">
+        <div className="text-center py-16 bg-gray-900 border border-gray-800 rounded-2xl text-gray-400 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
           <Brain className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-          <p className="font-semibold text-gray-600">No questions found</p>
+          <p className="font-semibold text-gray-400">No questions found</p>
           <p className="text-xs mt-1">Questions appear here after students take the diagnostic exam.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {filtered.map((q, idx) => (
-            <div key={q.id} className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <div key={q.id} className="bg-gray-900 border border-gray-800 rounded-2xl shadow-[0_0_15px_rgba(168,85,247,0.1)] overflow-hidden">
               {editingId === q.id ? (
                 // ── EDIT MODE ──
                 <div className="p-5 space-y-4">
-                  <div className="flex items-center gap-2 text-sm font-bold text-indigo-700">
+                  <div className="flex items-center gap-2 text-sm font-bold text-purple-300">
                     <FileEdit className="w-4 h-4" /> Editing Question #{idx + 1}
                     <span className={`ml-auto text-xs font-bold px-2 py-0.5 rounded-full border ${diffColors[q.difficulty]}`}>{q.difficulty}</span>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Question Text</label>
+                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Question Text</label>
                     <textarea rows={3} value={editForm.questionText} onChange={(e) => setEditForm((f) => ({ ...f, questionText: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-gray-900 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none" />
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-gray-100 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {['A', 'B', 'C', 'D'].map((opt) => (
                       <div key={opt}>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                        <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
                           Option {opt}
                           {editForm.correctOption === opt && <span className="text-emerald-600 text-[10px]">✓ Correct</span>}
                         </label>
@@ -383,7 +383,7 @@ function DiagnosticExamEditor({ onNotice }) {
                           <input value={editForm[`option${opt}`]} onChange={(e) => setEditForm((f) => ({ ...f, [`option${opt}`]: e.target.value }))}
                             className="flex-1 px-3 py-2 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                           <button onClick={() => setEditForm((f) => ({ ...f, correctOption: opt }))}
-                            className={`px-2.5 rounded-xl text-xs font-bold border transition cursor-pointer ${editForm.correctOption === opt ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white border-gray-200 text-gray-500 hover:border-emerald-400'}`}>
+                            className={`px-2.5 rounded-xl text-xs font-bold border transition cursor-pointer ${editForm.correctOption === opt ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-gray-900 border-gray-800 text-gray-400 hover:border-emerald-400'}`}>
                             ✓
                           </button>
                         </div>
@@ -392,11 +392,11 @@ function DiagnosticExamEditor({ onNotice }) {
                   </div>
                   <div className="flex gap-2">
                     <button onClick={saveEdit} disabled={saving}
-                      className="flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition disabled:opacity-50 cursor-pointer shadow-sm">
+                      className="flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-indigo-700 rounded-xl transition disabled:opacity-50 cursor-pointer shadow-[0_0_15px_rgba(168,85,247,0.1)]">
                       <Save className="w-3.5 h-3.5" /> {saving ? 'Saving…' : 'Save Changes'}
                     </button>
                     <button onClick={() => setEditingId(null)}
-                      className="px-4 py-2 text-xs font-semibold text-gray-500 hover:text-gray-800 rounded-xl transition cursor-pointer">
+                      className="px-4 py-2 text-xs font-semibold text-gray-400 hover:text-gray-200 rounded-xl transition cursor-pointer">
                       Cancel
                     </button>
                   </div>
@@ -405,19 +405,19 @@ function DiagnosticExamEditor({ onNotice }) {
                 // ── VIEW MODE ──
                 <div className="p-5">
                   <div className="flex items-start gap-3">
-                    <div className="shrink-0 w-7 h-7 rounded-lg bg-gray-100 text-gray-500 text-xs font-bold flex items-center justify-center">{idx + 1}</div>
+                    <div className="shrink-0 w-7 h-7 rounded-lg bg-gray-100 text-gray-400 text-xs font-bold flex items-center justify-center">{idx + 1}</div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${diffColors[q.difficulty]}`}>{q.difficulty}</span>
                       </div>
-                      <p className="text-sm text-gray-900 font-medium mb-3 leading-relaxed">{q.question_text}</p>
+                      <p className="text-sm text-gray-100 font-medium mb-3 leading-relaxed">{q.question_text}</p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                         {['A', 'B', 'C', 'D'].map((opt) => {
                           const text = q[`option_${opt.toLowerCase()}`];
                           const isCorrect = q.correct_option?.toUpperCase() === opt;
                           return text ? (
-                            <div key={opt} className={`flex items-start gap-2 px-3 py-2 rounded-lg text-xs ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold' : 'bg-gray-50 border border-gray-100 text-gray-600'}`}>
-                              <span className={`shrink-0 w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black ${isCorrect ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-300 text-gray-500'}`}>{opt}</span>
+                            <div key={opt} className={`flex items-start gap-2 px-3 py-2 rounded-lg text-xs ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold' : 'bg-gray-950 border border-gray-800 text-gray-400'}`}>
+                              <span className={`shrink-0 w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black ${isCorrect ? 'bg-emerald-600 text-white' : 'bg-gray-900 border border-gray-300 text-gray-400'}`}>{opt}</span>
                               {text} {isCorrect && <span className="ml-auto text-emerald-600">✓</span>}
                             </div>
                           ) : null;
@@ -425,7 +425,7 @@ function DiagnosticExamEditor({ onNotice }) {
                       </div>
                     </div>
                     <button onClick={() => startEdit(q)}
-                      className="shrink-0 flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition cursor-pointer">
+                      className="shrink-0 flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-purple-300 bg-purple-900/30 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition cursor-pointer">
                       <Edit3 className="w-3.5 h-3.5" /> Edit
                     </button>
                   </div>
@@ -534,21 +534,21 @@ export default function FacultyDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
+    <div className="min-h-screen bg-gray-950 text-gray-100">
       {/* Hero */}
-      <div className="bg-white border-b border-gray-200 py-6 px-4 shadow-sm">
+      <div className="bg-gray-900 border-b border-gray-800 py-6 px-4 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <p className="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-0.5">Faculty Portal</p>
-            <h1 className="text-2xl md:text-3xl font-black text-gray-900">
+            <p className="text-xs font-bold text-purple-400 uppercase tracking-widest mb-0.5">Faculty Portal</p>
+            <h1 className="text-2xl md:text-3xl font-black text-gray-100">
               Welcome, {user?.firstName} {user?.lastName} 👨‍🏫
             </h1>
-            <p className="text-gray-500 text-sm mt-1">Manage mentees, edit diagnostic questions, review roadmaps &amp; approve tests.</p>
+            <p className="text-gray-400 text-sm mt-1">Manage mentees, edit diagnostic questions, review roadmaps &amp; approve tests.</p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl">
-              <Shield className="w-4 h-4 text-indigo-600" />
-              <span className="text-xs font-bold text-indigo-700">Faculty Access</span>
+            <div className="flex items-center gap-2 px-3 py-2 bg-purple-900/30 border border-purple-900 rounded-xl">
+              <Shield className="w-4 h-4 text-purple-400" />
+              <span className="text-xs font-bold text-purple-300">Faculty Access</span>
             </div>
           </div>
         </div>
@@ -556,11 +556,11 @@ export default function FacultyDashboard() {
 
       {/* Tabs */}
       <div className="max-w-6xl mx-auto px-4 mt-5">
-        <div className="flex gap-1.5 bg-gray-100 border border-gray-200 p-1.5 rounded-xl w-fit flex-wrap">
-          {tabs.map(({ id, label, icon: Icon, badge, badgeColor = 'bg-indigo-500' }) => (
+        <div className="flex gap-1.5 bg-gray-100 border border-gray-800 p-1.5 rounded-xl w-fit flex-wrap">
+          {tabs.map(({ id, label, icon: Icon, badge, badgeColor = 'bg-purple-500' }) => (
             <button key={id} type="button" onClick={() => setActiveTab(id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer relative ${
-                activeTab === id ? 'bg-white text-indigo-700 shadow-sm border border-gray-200' : 'text-gray-600 hover:text-gray-900'
+                activeTab === id ? 'bg-gray-900 text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.1)] border border-gray-800' : 'text-gray-400 hover:text-gray-100'
               }`}>
               <Icon className="w-4 h-4" />
               <span className="hidden sm:inline">{label}</span>
@@ -583,24 +583,24 @@ export default function FacultyDashboard() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-indigo-600" /> My Mentees ({students.length})
+                <h3 className="text-lg font-bold text-gray-100 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-purple-400" /> My Mentees ({students.length})
                 </h3>
-                <p className="text-xs text-gray-500 mt-0.5">Students who selected you as their faculty mentor</p>
+                <p className="text-xs text-gray-400 mt-0.5">Students who selected you as their faculty mentor</p>
               </div>
-              <button onClick={loadStudents} className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 text-gray-500 cursor-pointer transition">
+              <button onClick={loadStudents} className="p-2 rounded-lg bg-gray-900 border border-gray-800 hover:bg-gray-950 text-gray-400 cursor-pointer transition">
                 <RefreshCw className="w-4 h-4" />
               </button>
             </div>
 
             {loading ? (
-              <div className="flex items-center justify-center py-16 text-gray-500 gap-3">
-                <Loader2 className="w-6 h-6 animate-spin text-indigo-600" /> Loading mentee data…
+              <div className="flex items-center justify-center py-16 text-gray-400 gap-3">
+                <Loader2 className="w-6 h-6 animate-spin text-purple-400" /> Loading mentee data…
               </div>
             ) : students.length === 0 ? (
-              <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl text-gray-500 shadow-sm">
+              <div className="text-center py-16 bg-gray-900 border border-gray-800 rounded-2xl text-gray-400 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
                 <Users className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-                <p className="font-semibold text-gray-700">No mentees yet.</p>
+                <p className="font-semibold text-gray-300">No mentees yet.</p>
                 <p className="text-xs mt-1">Students who select you as mentor will appear here.</p>
               </div>
             ) : (
@@ -610,17 +610,17 @@ export default function FacultyDashboard() {
                 const firstName = student.first_name || student.firstName || '';
                 const lastName = student.last_name || student.lastName || '';
                 return (
-                  <div key={sid} className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:border-gray-300 transition">
+                  <div key={sid} className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-[0_0_15px_rgba(168,85,247,0.1)] hover:border-gray-300 transition">
                     {/* Student Row Header */}
                     <button type="button" onClick={() => toggleStudent(sid)}
-                      className="w-full flex items-center justify-between gap-4 p-5 text-left hover:bg-gray-50 transition cursor-pointer">
+                      className="w-full flex items-center justify-between gap-4 p-5 text-left hover:bg-gray-950 transition cursor-pointer">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-11 h-11 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 text-sm font-black flex items-center justify-center shrink-0">
+                        <div className="w-11 h-11 rounded-xl bg-purple-900/30 border border-indigo-200 text-purple-300 text-sm font-black flex items-center justify-center shrink-0">
                           {firstName[0]}{lastName[0]}
                         </div>
                         <div className="min-w-0">
-                          <div className="font-bold text-gray-900 truncate">{firstName} {lastName}</div>
-                          <div className="text-xs text-gray-500 truncate">{student.email}</div>
+                          <div className="font-bold text-gray-100 truncate">{firstName} {lastName}</div>
+                          <div className="text-xs text-gray-400 truncate">{student.email}</div>
                           <div className="text-[11px] text-gray-400 mt-0.5">{student.course_title || 'No course enrolled'}</div>
                         </div>
                       </div>
@@ -662,43 +662,43 @@ export default function FacultyDashboard() {
         {activeTab === 'subjects' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
-                <Upload className="w-5 h-5 text-indigo-600" /> Publish New Subject
+              <h3 className="text-lg font-bold text-gray-100 flex items-center gap-2 mb-4">
+                <Upload className="w-5 h-5 text-purple-400" /> Publish New Subject
               </h3>
-              <form onSubmit={handleUploadSubject} className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4 shadow-sm">
+              <form onSubmit={handleUploadSubject} className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">Subject / Module Name *</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Subject / Module Name *</label>
                   <input type="text" required value={subjectName} onChange={(e) => setSubjectName(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-gray-300 text-gray-900 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-sm"
+                    className="w-full px-4 py-2.5 rounded-xl bg-gray-900 border border-gray-300 text-gray-100 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-[0_0_15px_rgba(168,85,247,0.1)]"
                     placeholder="e.g. Advanced Machine Learning" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">Description &amp; Syllabus</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Description &amp; Syllabus</label>
                   <textarea rows={4} value={subjectDescription} onChange={(e) => setSubjectDescription(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-gray-300 text-gray-900 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none shadow-sm"
+                    className="w-full px-4 py-2.5 rounded-xl bg-gray-900 border border-gray-300 text-gray-100 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none shadow-[0_0_15px_rgba(168,85,247,0.1)]"
                     placeholder="Describe what students will learn, key topics, prerequisites…" />
                 </div>
                 <button type="submit" disabled={uploadingSubject}
-                  className="w-full py-3 font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer text-sm shadow-sm">
+                  className="w-full py-3 font-bold text-white bg-purple-600 hover:bg-indigo-700 rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer text-sm shadow-[0_0_15px_rgba(168,85,247,0.1)]">
                   {uploadingSubject ? <><Loader2 className="w-4 h-4 animate-spin" /> Publishing…</> : <><Upload className="w-4 h-4" /> Publish Subject</>}
                 </button>
               </form>
             </div>
 
             <div>
-              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
-                <BookMarked className="w-5 h-5 text-indigo-600" /> Published Subjects ({subjects.length})
+              <h3 className="text-lg font-bold text-gray-100 flex items-center gap-2 mb-4">
+                <BookMarked className="w-5 h-5 text-purple-400" /> Published Subjects ({subjects.length})
               </h3>
               {loading ? (
-                <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-indigo-600" /></div>
+                <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-purple-400" /></div>
               ) : subjects.length === 0 ? (
-                <div className="text-center py-8 bg-white border border-gray-200 rounded-2xl text-gray-400 text-sm shadow-sm">No subjects published yet.</div>
+                <div className="text-center py-8 bg-gray-900 border border-gray-800 rounded-2xl text-gray-400 text-sm shadow-[0_0_15px_rgba(168,85,247,0.1)]">No subjects published yet.</div>
               ) : (
                 <div className="space-y-3">
                   {subjects.map((sub) => (
-                    <div key={sub.id} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:border-indigo-200 transition">
-                      <div className="font-bold text-gray-900 text-sm mb-1">{sub.subject_name}</div>
-                      {sub.description && <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">{sub.description}</p>}
+                    <div key={sub.id} className="bg-gray-900 border border-gray-800 rounded-2xl p-5 shadow-[0_0_15px_rgba(168,85,247,0.1)] hover:border-indigo-200 transition">
+                      <div className="font-bold text-gray-100 text-sm mb-1">{sub.subject_name}</div>
+                      {sub.description && <p className="text-xs text-gray-400 leading-relaxed line-clamp-2">{sub.description}</p>}
                       <div className="text-[11px] text-gray-400 mt-2 font-mono">Published: {new Date(sub.created_at || Date.now()).toLocaleDateString()}</div>
                     </div>
                   ))}
@@ -711,29 +711,29 @@ export default function FacultyDashboard() {
         {/* ── REQUESTS TAB ── */}
         {activeTab === 'requests' && (
           <div className="space-y-4">
-            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <Award className="w-5 h-5 text-indigo-600" /> Weekly Periodic Test Approvals
+            <h3 className="text-lg font-bold text-gray-100 flex items-center gap-2">
+              <Award className="w-5 h-5 text-purple-400" /> Weekly Periodic Test Approvals
               {pendingCount > 0 && <span className="ml-2 px-2.5 py-1 bg-rose-100 text-rose-700 text-xs font-bold rounded-full">{pendingCount} Pending</span>}
             </h3>
             {loading ? (
-              <div className="flex items-center justify-center py-16 gap-3 text-gray-500">
-                <Loader2 className="w-6 h-6 animate-spin text-indigo-600" /> Loading requests…
+              <div className="flex items-center justify-center py-16 gap-3 text-gray-400">
+                <Loader2 className="w-6 h-6 animate-spin text-purple-400" /> Loading requests…
               </div>
             ) : requests.length === 0 ? (
-              <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl text-gray-500 shadow-sm">
+              <div className="text-center py-16 bg-gray-900 border border-gray-800 rounded-2xl text-gray-400 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
                 <Award className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-                <p className="font-semibold text-gray-700">No test access requests yet.</p>
+                <p className="font-semibold text-gray-300">No test access requests yet.</p>
               </div>
             ) : (
               requests.map((req) => {
                 const name = req.student_first_name ? `${req.student_first_name} ${req.student_last_name}` : `${req.firstName || ''} ${req.lastName || ''}`;
                 return (
-                  <div key={req.request_id || req.id} className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+                  <div key={req.request_id || req.id} className="bg-gray-900 border border-gray-800 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
                     <div>
-                      <div className="font-bold text-gray-900 text-sm">{name.trim() || 'Unknown Student'}</div>
-                      <div className="text-xs text-gray-500">{req.student_email}</div>
-                      <div className="text-xs text-gray-600 mt-1.5">
-                        Module: <span className="text-indigo-600 font-semibold">{req.module_title || req.moduleTitle}</span>
+                      <div className="font-bold text-gray-100 text-sm">{name.trim() || 'Unknown Student'}</div>
+                      <div className="text-xs text-gray-400">{req.student_email}</div>
+                      <div className="text-xs text-gray-400 mt-1.5">
+                        Module: <span className="text-purple-400 font-semibold">{req.module_title || req.moduleTitle}</span>
                         {req.course_title && <span className="text-gray-400 ml-2">({req.course_title})</span>}
                       </div>
                       <div className="text-[11px] text-gray-400 font-mono mt-1">
@@ -749,7 +749,7 @@ export default function FacultyDashboard() {
                       {req.status === 'pending' ? (
                         <>
                           <button onClick={() => handleReviewRequest(req.request_id || req.id, 'approved')} disabled={reviewingId === (req.request_id || req.id)}
-                            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition disabled:opacity-50 cursor-pointer shadow-sm">
+                            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition disabled:opacity-50 cursor-pointer shadow-[0_0_15px_rgba(168,85,247,0.1)]">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Approve Test
                           </button>
                           <button onClick={() => handleReviewRequest(req.request_id || req.id, 'rejected')} disabled={reviewingId === (req.request_id || req.id)}

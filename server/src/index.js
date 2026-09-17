@@ -12,6 +12,8 @@ import examRoutes from './routes/examRoutes.js';
 import facultyRoutes from './routes/facultyRoutes.js';
 import codeRoutes from './routes/codeRoutes.js';
 import pool, { rawDb } from './config/db.js';
+import { seedDatabase } from './seed/seedData.js';
+import { seedEnhancements } from './seed/seedEnhancements.js';
 
 dotenv.config();
 
@@ -69,11 +71,6 @@ app.get('/api/v1/health', (req, res) => {
 });
 
 // Serve compiled frontend assets if available (Production unified deployment)
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import fs from 'node:fs';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const clientDistPath = path.resolve(__dirname, '../../client/dist');
 
 if (fs.existsSync(clientDistPath)) {

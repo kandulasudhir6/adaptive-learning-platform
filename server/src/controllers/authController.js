@@ -1,3 +1,4 @@
+const otpStore = new Map();
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'node:crypto';
@@ -113,11 +114,17 @@ export const register = async (req, res) => {
  * Standard Login (Student and fallback Faculty)
  */
 export const login = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, otp } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required.' });
+  if (!email || !otp) {
+    return res.status(400).json({ error: 'Email and OTP are required.' });
   }
+
+  const storedData = otpStore.get(email.toLowerCase().trim());
+  if (!storedData || storedData.otp !== otp || Date.now() > storedData.expires) {
+    return res.status(401).json({ error: 'Invalid or expired OTP.' });
+  }
+  otpStore.delete(email.toLowerCase().trim());
 
   try {
     const userRes = await pool.query(
@@ -127,14 +134,18 @@ export const login = async (req, res) => {
     );
 
     if (userRes.rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
+      return res.status(401).json({ error: 'User not found.' });
     }
 
     const user = userRes.rows[0];
-    const isMatch = await bcrypt.compare(password, user.password_hash);
 
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
+    // If user is a student, we also verify password
+    if (user.role === 'student') {
+      if (!password) return res.status(400).json({ error: 'Password required for students.' });
+      const isMatch = await bcrypt.compare(password, user.password_hash);
+      if (!isMatch) {
+        return res.status(401).json({ error: 'Invalid email or password.' });
+      }
     }
 
     // Record login timestamp
@@ -451,4 +462,12 @@ export const getDemoAccounts = async (req, res) => {
   } catch (err) {
     return res.status(500).json({ error: 'Failed to fetch demo accounts' });
   }
+};
+export const requestOtp = async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email required' });
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  otpStore.set(email.toLowerCase().trim(), { otp, expires: Date.now() + 10 * 60 * 1000 });
+  console.log(`\n\n[SIMULATED EMAIL] OTP for ${email} is: ${otp}\n\n`);
+  return res.status(200).json({ success: true, message: 'OTP sent' });
 };

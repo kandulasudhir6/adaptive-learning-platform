@@ -21,8 +21,8 @@ export default function LevelBadge({ level, size = 'md' }) {
     },
     advanced: {
       label: 'Level 3: Advanced',
-      bg: 'bg-indigo-50',
-      text: 'text-indigo-700',
+      bg: 'bg-purple-900/30',
+      text: 'text-purple-300',
       border: 'border-indigo-200',
       icon: Zap,
     },

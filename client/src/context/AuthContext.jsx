@@ -31,8 +31,8 @@ export function AuthProvider({ children }) {
     loadSession();
   }, [token]);
 
-  const login = async (email, password) => {
-    const res = await api.auth.login({ email, password });
+  const login = async (email, password, otp) => {
+    const res = await api.auth.login({ email, password, otp });
     if (res.success && res.token) {
       localStorage.setItem('alp_auth_token', res.token);
       setToken(res.token);

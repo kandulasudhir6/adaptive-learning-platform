@@ -41,6 +41,11 @@ async function request(endpoint, options = {}) {
 
 export const api = {
   auth: {
+    requestOtp: (email) =>
+      request('/auth/request-otp', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      }),
     login: (credentials) =>
       request('/auth/login', {
         method: 'POST',

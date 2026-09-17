@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import StudentDashboard from './pages/StudentDashboard';
 import EntranceExamPage from './pages/EntranceExamPage';
@@ -12,27 +13,31 @@ function MainApp() {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedModuleId, setSelectedModuleId] = useState(null);
+  const [showLogin, setShowLogin] = useState(false);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
-          <span className="text-gray-500 text-sm font-medium">Loading EduVibe AI...</span>
+          <div className="w-12 h-12 border-4 border-purple-800 border-t-purple-500 rounded-full animate-spin" />
+          <span className="text-gray-400 text-sm font-medium">Loading PRIVID...</span>
         </div>
       </div>
     );
   }
 
   if (!user) {
-    return <LoginPage />;
+    if (showLogin) {
+      return <LoginPage onBack={() => setShowLogin(false)} />;
+    }
+    return <LandingPage onRegisterClick={() => setShowLogin(true)} />;
   }
 
   const isStudent = user.role === 'student';
   const isFaculty = user.role === 'faculty' || user.role === 'admin';
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col font-sans">
+    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col font-sans">
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <main className="flex-1">

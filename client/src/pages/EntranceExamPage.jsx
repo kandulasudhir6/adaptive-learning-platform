@@ -135,14 +135,14 @@ export default function EntranceExamPage({ onComplete }) {
 
   if (error) return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-6">
-      <div className="bg-slate-900 border border-rose-900/50 rounded-2xl p-6 max-w-md w-full text-center shadow-sm space-y-4">
+      <div className="bg-slate-900 border border-rose-900/50 rounded-2xl p-6 max-w-md w-full text-center shadow-[0_0_15px_rgba(168,85,247,0.1)] space-y-4">
         <AlertCircle className="w-10 h-10 text-rose-500 mx-auto" />
         <h3 className="text-white font-bold text-lg">Exam Initialization Error</h3>
         <p className="text-sm text-rose-400">{error}</p>
         <div className="flex gap-3 justify-center">
           <button
             onClick={() => { setError(''); setLoading(true); window.location.reload(); }}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl flex items-center gap-2 transition"
+            className="px-4 py-2 bg-purple-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl flex items-center gap-2 transition"
           >
             <RefreshCw className="w-4 h-4" /> Retry
           </button>
@@ -158,7 +158,7 @@ export default function EntranceExamPage({ onComplete }) {
 
   if (result) return (
     <div className="min-h-screen bg-slate-950 py-10 px-4 max-w-4xl mx-auto">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-sm mb-8 text-center">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-[0_0_15px_rgba(168,85,247,0.1)] mb-8 text-center">
         <div className="flex items-center justify-center gap-2 mb-4">
           <Trophy className="w-6 h-6 text-amber-500" />
           <span className="text-amber-500 font-bold text-sm uppercase tracking-wider">Diagnostic Complete</span>
@@ -203,7 +203,7 @@ export default function EntranceExamPage({ onComplete }) {
       <div className="mt-8 text-center">
         <button
           onClick={onComplete}
-          className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-sm transition flex items-center gap-2 mx-auto"
+          className="px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm shadow-[0_0_15px_rgba(168,85,247,0.1)] transition flex items-center gap-2 mx-auto"
         >
           <ArrowRight className="w-4 h-4" /> Go to Dashboard
         </button>
@@ -213,14 +213,14 @@ export default function EntranceExamPage({ onComplete }) {
 
   if (!questions || questions.length === 0) return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-6">
-      <div className="bg-slate-900 border border-amber-900/50 rounded-2xl p-6 max-w-md w-full text-center shadow-sm space-y-4">
+      <div className="bg-slate-900 border border-amber-900/50 rounded-2xl p-6 max-w-md w-full text-center shadow-[0_0_15px_rgba(168,85,247,0.1)] space-y-4">
         <AlertCircle className="w-10 h-10 text-amber-500 mx-auto" />
         <h3 className="text-white font-bold">No Questions Loaded</h3>
         <p className="text-sm text-slate-400">
           The exam session was created but questions could not be loaded. This may happen if the entrance exam was already completed.
         </p>
         {onComplete && (
-          <button onClick={onComplete} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition">
+          <button onClick={onComplete} className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold rounded-xl transition">
             Back to Dashboard
           </button>
         )}
@@ -232,7 +232,7 @@ export default function EntranceExamPage({ onComplete }) {
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col">
-      <div className="sticky top-0 z-20 bg-slate-900 border-b border-slate-800 shadow-sm">
+      <div className="sticky top-0 z-20 bg-slate-900 border-b border-slate-800 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 min-w-0">
             <Brain className="w-5 h-5 text-indigo-500 shrink-0" />
@@ -259,7 +259,7 @@ export default function EntranceExamPage({ onComplete }) {
             onClick={() => setPart('mcq')}
             className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-lg transition shrink-0 ${
               part === 'mcq'
-                ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                ? 'bg-purple-500/20 text-indigo-300 border border-indigo-500/30'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -274,7 +274,7 @@ export default function EntranceExamPage({ onComplete }) {
               onClick={() => setPart(`coding-${i}`)}
               className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-lg transition shrink-0 ${
                 part === `coding-${i}`
-                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                  ? 'bg-purple-500/20 text-indigo-300 border border-indigo-500/30'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -305,7 +305,7 @@ export default function EntranceExamPage({ onComplete }) {
                   key={q.id}
                   onClick={() => setCurrentIndex(idx)}
                   className={`h-2 flex-1 rounded-full transition ${
-                    currentIndex === idx ? 'bg-indigo-500' :
+                    currentIndex === idx ? 'bg-purple-500' :
                     answers[q.id] ? 'bg-indigo-900' : 'bg-slate-800 hover:bg-slate-700'
                   }`}
                   title={`Question ${idx + 1}`}
@@ -313,7 +313,7 @@ export default function EntranceExamPage({ onComplete }) {
               ))}
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
               <p className="text-white font-medium text-lg mb-8 leading-relaxed">
                 {currentQ.questionText || currentQ.question_text}
               </p>
@@ -329,12 +329,12 @@ export default function EntranceExamPage({ onComplete }) {
                       onClick={() => setAnswers((p) => ({ ...p, [currentQ.id]: opt }))}
                       className={`w-full flex items-start gap-3 p-4 rounded-xl border text-left transition ${
                         isSelected
-                          ? 'border-indigo-500 bg-indigo-500/10'
+                          ? 'border-indigo-500 bg-purple-500/10'
                           : 'border-slate-700 hover:border-slate-600 bg-slate-800'
                       }`}
                     >
                       <div className={`shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold ${
-                        isSelected ? 'bg-indigo-500 text-white' : 'bg-slate-700 text-slate-400'
+                        isSelected ? 'bg-purple-500 text-white' : 'bg-slate-700 text-slate-400'
                       }`}>
                         {opt}
                       </div>
@@ -359,14 +359,14 @@ export default function EntranceExamPage({ onComplete }) {
               {currentIndex === questions.length - 1 ? (
                 <button
                   onClick={() => codingChallenges.length > 0 ? setPart('coding-0') : handleSubmit()}
-                  className="px-6 py-2.5 rounded-xl font-bold text-sm bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-sm flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white transition shadow-[0_0_15px_rgba(168,85,247,0.1)] flex items-center gap-2"
                 >
                   {codingChallenges.length > 0 ? 'Continue to Coding' : 'Submit Exam'} <ArrowRight className="w-4 h-4" />
                 </button>
               ) : (
                 <button
                   onClick={() => setCurrentIndex((p) => Math.min(questions.length - 1, p + 1))}
-                  className="px-6 py-2.5 rounded-xl font-bold text-sm bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-sm flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white transition shadow-[0_0_15px_rgba(168,85,247,0.1)] flex items-center gap-2"
                 >
                   Next <ChevronRight className="w-4 h-4" />
                 </button>
@@ -404,7 +404,7 @@ export default function EntranceExamPage({ onComplete }) {
                 <button
                   onClick={() => handleSubmit()}
                   disabled={submitting}
-                  className="px-6 py-3 rounded-xl font-bold text-sm bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition disabled:opacity-50 flex items-center gap-2"
+                  className="px-6 py-3 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.1)] transition disabled:opacity-50 flex items-center gap-2"
                 >
                   {submitting ? 'Submitting...' : 'Submit Full Exam'} <ArrowRight className="w-4 h-4" />
                 </button>
@@ -414,7 +414,7 @@ export default function EntranceExamPage({ onComplete }) {
                     const idx = parseInt(part.split('-')[1], 10);
                     setPart(`coding-${idx + 1}`);
                   }}
-                  className="px-6 py-3 rounded-xl font-bold text-sm bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition flex items-center gap-2"
+                  className="px-6 py-3 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.1)] transition flex items-center gap-2"
                 >
                   Next Round <ArrowRight className="w-4 h-4" />
                 </button>
