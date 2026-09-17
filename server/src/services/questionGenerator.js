@@ -220,7 +220,7 @@ Respond with ONLY a valid JSON array (no markdown, no explanation):
 ]`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
+      model: 'gemini-1.5-flash',
       contents: prompt,
       config: { temperature: 0.7, maxOutputTokens: 4096 },
     });
