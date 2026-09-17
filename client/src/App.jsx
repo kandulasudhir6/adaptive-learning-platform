@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import StudentDashboard from './pages/StudentDashboard';
 import EntranceExamPage from './pages/EntranceExamPage';
 import ModuleLearningPage from './pages/ModuleLearningPage';
@@ -13,7 +14,7 @@ function MainApp() {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedModuleId, setSelectedModuleId] = useState(null);
-  const [showLogin, setShowLogin] = useState(false);
+  const [authView, setAuthView] = useState('landing'); // 'landing' | 'login' | 'register'
 
   if (loading) {
     return (
@@ -27,10 +28,13 @@ function MainApp() {
   }
 
   if (!user) {
-    if (showLogin) {
-      return <LoginPage onBack={() => setShowLogin(false)} />;
+    if (authView === 'login') {
+      return <LoginPage onBack={() => setAuthView('landing')} onRegisterClick={() => setAuthView('register')} />;
     }
-    return <LandingPage onRegisterClick={() => setShowLogin(true)} />;
+    if (authView === 'register') {
+      return <RegisterPage onBack={() => setAuthView('landing')} onLoginClick={() => setAuthView('login')} />;
+    }
+    return <LandingPage onRegisterClick={() => setAuthView('register')} onLoginClick={() => setAuthView('login')} />;
   }
 
   const isStudent = user.role === 'student';

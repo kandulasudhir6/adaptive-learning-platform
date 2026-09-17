@@ -28,12 +28,18 @@ async function recordLoginLog(userId, req) {
  * Student Registration
  */
 export const register = async (req, res) => {
-  const { firstName, lastName, email, password, role = 'student' } = req.body;
+  const { firstName, lastName, email, password, role = 'student', otp } = req.body;
 
-  if (!firstName || !lastName || !email || !password) {
-    return res.status(400).json({ error: 'First name, last name, email, and password are required.' });
+  if (!firstName || !lastName || !email || !password || !otp) {
+    return res.status(400).json({ error: 'All fields including OTP are required.' });
   }
 
+  const storedData = otpStore.get(email.toLowerCase().trim());
+  if (!storedData || storedData.otp !== otp || Date.now() > storedData.expires) {
+    return res.status(401).json({ error: 'Invalid or expired verification code.' });
+  }
+  // Do not delete OTP here yet, let it be consumed successfully first or delete after.
+  
   // Student default, faculty via admin/preset
   const userRole = role === 'faculty' ? 'faculty' : 'student';
 
@@ -71,6 +77,7 @@ export const register = async (req, res) => {
     }
 
     await client.query('COMMIT');
+    otpStore.delete(email.toLowerCase().trim());
 
     // Record login log
     await recordLoginLog(userId, req);
