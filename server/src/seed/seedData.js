@@ -97,9 +97,9 @@ export async function seedDatabase() {
     VALUES (?, ?, ?, ?)
   `).run(
     courseCs101Id,
-    'Computer Science 101: Data Structures & Algorithms',
-    'CS101',
-    'Master foundational to advanced algorithmic thinking, linear and non-linear data structures, complexity analysis, and scalable problem solving.'
+    'C Programming Language: Zero to Hero',
+    'C101',
+    'Master the C language fundamentals including pointers, memory management, data types, and systems programming.'
   );
 
   rawDb.prepare(`

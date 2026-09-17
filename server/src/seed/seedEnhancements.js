@@ -80,7 +80,7 @@ export async function seedEnhancements() {
   }
 
   // 4. Seed Coding Challenges for CodeTantra arena
-  const courseCs101 = rawDb.prepare("SELECT id FROM courses WHERE code = 'CS101'").get();
+  const courseCs101 = rawDb.prepare("SELECT id FROM courses WHERE code = 'C101'").get();
   const courseId = courseCs101?.id;
 
   if (courseId) {

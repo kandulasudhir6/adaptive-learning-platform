@@ -123,6 +123,7 @@ export const api = {
       }),
   },
   faculty: {
+    getOverview: () => request('/faculty/overview'),
     getMyStudents: () => request('/faculty/my-students'),
     getStudentLogins: (studentId) => request(`/faculty/student/${studentId}/logins`),
     getStudentRoadmap: (studentId) => request(`/faculty/student/${studentId}/roadmap`),

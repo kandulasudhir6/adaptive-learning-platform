@@ -10,6 +10,7 @@ import {
   reviewRequest,
   getDiagnosticQuestions,
   updateDiagnosticQuestion,
+  getOverviewStats,
 } from '../controllers/facultyController.js';
 import { authenticateToken, requireRole } from '../middlewares/authMiddleware.js';
 
@@ -17,6 +18,9 @@ const router = express.Router();
 
 router.use(authenticateToken);
 router.use(requireRole('faculty', 'admin'));
+
+// Overview
+router.get('/overview', getOverviewStats);
 
 // Assigned Mentees & Day-to-Day Logins
 router.get('/my-students', getMyStudents);

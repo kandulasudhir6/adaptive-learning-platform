@@ -377,3 +377,24 @@ export const updateDiagnosticQuestion = async (req, res) => {
     return res.status(500).json({ error: 'Failed to update diagnostic question.' });
   }
 };
+export const getOverviewStats = async (req, res) => {
+  try {
+    const studentsRes = await pool.query("SELECT COUNT(*) as count FROM users WHERE role = 'student'");
+    const mentorsRes = await pool.query(`
+      SELECT 
+        f.id as mentor_id, f.first_name || ' ' || f.last_name as mentor_name, 
+        COUNT(sm.student_id) as assigned_students
+      FROM users f
+      LEFT JOIN student_mentors sm ON f.id = sm.faculty_id
+      WHERE f.role = 'faculty'
+      GROUP BY f.id
+    `);
+    res.json({
+      success: true,
+      totalStudents: parseInt(studentsRes.rows[0].count, 10),
+      mentors: mentorsRes.rows
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch overview stats' });
+  }
+};

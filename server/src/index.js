@@ -93,3 +93,5 @@ app.listen(PORT, () => {
   console.log(`🚀 Adaptive Learning Platform API Server running on port ${PORT}`);
   console.log(`📡 Health check available at http://localhost:${PORT}/api/v1/health`);
 });
+
+

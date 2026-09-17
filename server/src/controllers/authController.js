@@ -1,3 +1,4 @@
+import { sendOtpEmail } from '../services/emailService.js';
 const otpStore = new Map();
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -470,11 +471,37 @@ export const getDemoAccounts = async (req, res) => {
     return res.status(500).json({ error: 'Failed to fetch demo accounts' });
   }
 };
+
+// In-memory store for OTPs (For production, use Redis or a DB table)
+// Structure: Map<email, { otp: string, expires: number }>
+
+/**
+ * Generate and send OTP (Used for both Student and Faculty)
+ */
 export const requestOtp = async (req, res) => {
   const { email } = req.body;
-  if (!email) return res.status(400).json({ error: 'Email required' });
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  otpStore.set(email.toLowerCase().trim(), { otp, expires: Date.now() + 10 * 60 * 1000 });
-  console.log(`\n\n[SIMULATED EMAIL] OTP for ${email} is: ${otp}\n\n`);
-  return res.status(200).json({ success: true, message: 'OTP sent' });
+  if (!email) return res.status(400).json({ error: 'Email is required.' });
+
+  // Generate a random 6-digit OTP
+  const otp = crypto.randomInt(100000, 999999).toString();
+  
+  // Store it (expires in 10 minutes)
+  otpStore.set(email.toLowerCase().trim(), {
+    otp,
+    expires: Date.now() + 10 * 60 * 1000
+  });
+
+  // Print to terminal for debugging
+  console.log(`\n[SIMULATED EMAIL] OTP for ${email} is: ${otp}\n`);
+
+  // Attempt to send real email
+  try {
+    await sendOtpEmail(email.toLowerCase().trim(), otp);
+  } catch (err) {
+    // We swallow the error here in dev mode if they haven't set up the email yet,
+    // so they can still test using the terminal code.
+    console.warn("Could not send real email. Relying on terminal output.");
+  }
+
+  res.json({ success: true, message: 'OTP sent' });
 };
