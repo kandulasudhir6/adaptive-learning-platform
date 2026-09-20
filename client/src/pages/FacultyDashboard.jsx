@@ -44,8 +44,12 @@ function StudentDetailPanel({ student, onNotice }) {
     if (!roadmap) return;
     setSaving(true);
     try {
-      await api.faculty.updateStudentRoadmap(studentId, { roadmap_data: roadmap.roadmap_data });
-      onNotice({ type: 'success', message: 'Roadmap updated successfully.' });
+      await api.faculty.updateStudentRoadmap(roadmap.id, { 
+        milestones: roadmap.milestones,
+        facultyNotes: roadmap.faculty_notes,
+        status: 'approved'
+      });
+      onNotice({ type: 'success', message: 'Roadmap approved and saved successfully.' });
       setEditingRoadmap(false);
     } catch (err) {
       onNotice({ type: 'error', message: err.message });
@@ -80,9 +84,9 @@ function StudentDetailPanel({ student, onNotice }) {
         </div>
       ) : roadmap ? (
         <RoadmapViewer 
-          roadmapData={roadmap.roadmap_data} 
-          isEditing={editingRoadmap}
-          onChange={(newVal) => setRoadmap({ ...roadmap, roadmap_data: newVal })}
+          roadmap={roadmap} 
+          courseTitle={roadmap.course_title}
+          facultyName={roadmap.faculty_first_name}
         />
       ) : (
         <div className="text-gray-500 text-center py-8">No roadmap data available.</div>
@@ -278,3 +282,5 @@ export default function FacultyDashboard() {
     </div>
   );
 }
+
+
