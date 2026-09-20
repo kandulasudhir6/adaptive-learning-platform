@@ -1,130 +1,87 @@
-import vm from 'node:vm';
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { execSync } from 'node:child_process';
+import os from 'node:os';
 
 /**
- * Deep equality helper for comparing outputs (handles arrays, objects, primitives)
+ * Safely executes C code against test cases by compiling with gcc.
+ * We expect the user to write a standard C program that takes space-separated
+ * inputs from stdin and prints the result to stdout.
  */
-function isDeepEqual(a, b) {
-  if (a === b) return true;
-  if (typeof a !== typeof b) return false;
-  if (a === null || b === null) return a === b;
-
-  if (Array.isArray(a) && Array.isArray(b)) {
-    if (a.length !== b.length) return false;
-    for (let i = 0; i < a.length; i++) {
-      if (!isDeepEqual(a[i], b[i])) return false;
-    }
-    return true;
-  }
-
-  if (typeof a === 'object' && typeof b === 'object') {
-    const keysA = Object.keys(a);
-    const keysB = Object.keys(b);
-    if (keysA.length !== keysB.length) return false;
-    for (const key of keysA) {
-      if (!isDeepEqual(a[key], b[key])) return false;
-    }
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Safely executes user code against test cases in an isolated VM sandbox
- */
-export function executeCode(userCode, testCases = [], entryFunctionName = 'solution') {
+export function executeCode(userCode, testCases = [], entryFunctionName = 'main') {
   const results = [];
   let passedCount = 0;
+  
+  // Create temp dir
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'c_runner_'));
+  const sourcePath = path.join(tempDir, 'solution.c');
+  let exePath = path.join(tempDir, 'solution');
+  
+  if (process.platform === 'win32') {
+    exePath += '.exe';
+  }
+
+  fs.writeFileSync(sourcePath, userCode);
+
+  let compilationError = null;
+  try {
+    // Compile the C code using gcc
+    execSync(`gcc -O2 "${sourcePath}" -o "${exePath}"`, { stdio: 'pipe' });
+  } catch (err) {
+    compilationError = err.stderr ? err.stderr.toString() : err.message;
+  }
 
   for (let i = 0; i < testCases.length; i++) {
     const tc = testCases[i];
-    const logs = [];
     let actualOutput = null;
     let executionError = null;
     const startTime = performance.now();
+    let logs = '';
 
-    try {
-      // Sandbox environment with captured console
-      const sandbox = {
-        console: {
-          log: (...args) => {
-            logs.push(args.map((a) => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' '));
-          },
-          error: (...args) => {
-            logs.push('[Error] ' + args.join(' '));
-          },
-        },
-        Math,
-        Number,
-        String,
-        Array,
-        Object,
-        Boolean,
-        Map,
-        Set,
-        parseInt,
-        parseFloat,
-      };
-
-      const context = vm.createContext(sandbox);
-
-      // Parse test case input: either single value or array of arguments
-      const rawInput = tc.input;
-      const inputArgs = Array.isArray(rawInput) ? rawInput : [rawInput];
-
-      // Build wrapper script
-      const scriptCode = `
-        ${userCode}
-
-        // Locate entrypoint function
-        let fn = null;
-        if (typeof ${entryFunctionName} === 'function') {
-          fn = ${entryFunctionName};
-        } else if (typeof solve === 'function') {
-          fn = solve;
-        } else if (typeof twoSum === 'function') {
-          fn = twoSum;
-        } else if (typeof reverseString === 'function') {
-          fn = reverseString;
-        } else if (typeof lengthOfLongestSubstring === 'function') {
-          fn = lengthOfLongestSubstring;
-        } else if (typeof isValid === 'function') {
-          fn = isValid;
-        } else if (typeof knapsack === 'function') {
-          fn = knapsack;
+    if (compilationError) {
+      executionError = "Compilation Error:\\n" + compilationError;
+    } else {
+      try {
+        // Prepare input (convert array of args to string if necessary)
+        const rawInput = tc.input;
+        const inputStr = Array.isArray(rawInput) ? rawInput.join(' ') : String(rawInput);
+        
+        // Execute the binary with timeout
+        const output = execSync(`"${exePath}"`, { 
+          input: inputStr, 
+          timeout: 2000,
+          stdio: 'pipe' 
+        });
+        
+        actualOutput = output.toString().trim();
+      } catch (err) {
+        if (err.code === 'ETIMEDOUT') {
+          executionError = 'Execution Timeout (2000ms)';
         } else {
-          // Look for any declared function
-          for (const key of Object.keys(this)) {
-            if (typeof this[key] === 'function' && key !== 'parseInt' && key !== 'parseFloat') {
-              fn = this[key];
-              break;
-            }
-          }
+          executionError = err.stderr ? err.stderr.toString() : err.message;
         }
-
-        if (!fn) {
-          throw new Error('No executable function found in your submission.');
-        }
-
-        // Execute function with arguments
-        __result = fn(...__args);
-      `;
-
-      sandbox.__args = inputArgs;
-      sandbox.__result = undefined;
-
-      const script = new vm.Script(scriptCode);
-      script.runInContext(context, { timeout: 2000 }); // 2000ms execution timeout
-
-      actualOutput = sandbox.__result;
-    } catch (err) {
-      executionError = err.message || String(err);
+      }
     }
 
     const endTime = performance.now();
     const executionTimeMs = parseFloat((endTime - startTime).toFixed(2));
 
-    const isPassed = !executionError && isDeepEqual(actualOutput, tc.expected);
+    // Simple string equality for C output comparison
+    const expectedStr = Array.isArray(tc.expected) ? JSON.stringify(tc.expected).replace(/[\\[\\]]/g, '') : String(tc.expected).trim();
+    
+    let isPassed = false;
+    if (!executionError) {
+      if (actualOutput === expectedStr) {
+         isPassed = true;
+      } else {
+         // Attempt loose matching (e.g. ignoring trailing newlines)
+         if (actualOutput.trim() === expectedStr.trim()) {
+            isPassed = true;
+         }
+      }
+    }
+    
     if (isPassed) passedCount++;
 
     results.push({
@@ -134,10 +91,17 @@ export function executeCode(userCode, testCases = [], entryFunctionName = 'solut
       actual: actualOutput,
       passed: isPassed,
       error: executionError,
-      logs: logs.join('\n'),
+      logs: logs,
       isHidden: Boolean(tc.isHidden),
       executionTimeMs,
     });
+  }
+
+  // Cleanup temp files safely
+  try {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  } catch (e) {
+    console.error("Cleanup error:", e);
   }
 
   return {

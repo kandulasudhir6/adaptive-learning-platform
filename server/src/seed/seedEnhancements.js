@@ -55,9 +55,9 @@ export async function seedEnhancements() {
     {
       id: crypto.randomUUID(),
       faculty_id: robertId,
-      subject_name: 'Advanced Data Structures & Algorithmic Complexity',
+      subject_name: 'C Programming & Systems Fundamentals',
       category: 'Computer Science',
-      description: 'Asymptotic analysis, memory layout, red-black & AVL self-balancing trees, and graph flow networks.',
+      description: 'Pointers, memory management, system-level programming, and data structures in C.',
     },
     {
       id: crypto.randomUUID(),
@@ -101,115 +101,95 @@ export async function seedEnhancements() {
         id: crypto.randomUUID(),
         course_id: courseId,
         difficulty: 'beginner',
-        title: 'Two Sum Target Identifier',
-        description: `Given an array of integers \`nums\` and an integer \`target\`, return the **indices** of the two numbers such that they add up to \`target\`.
+        title: 'Sum of Two Integers',
+        description: `Read two space-separated integers from standard input and print their sum to standard output.
 
 ### Constraints:
-- Each input will have exactly one solution.
-- You may not use the same element twice.
-- Return the indices in an array \`[index1, index2]\`.
+- Use standard C \`scanf\` and \`printf\`.
 
 ### Example 1:
 \`\`\`
-Input: nums = [2, 7, 11, 15], target = 9
-Output: [0, 1]
-Explanation: nums[0] + nums[1] == 9, return [0, 1].
+Input: 5 7
+Output: 12
 \`\`\`
 `,
-        starter_code: `/**
- * @param {number[]} nums
- * @param {number} target
- * @return {number[]}
- */
-function twoSum(nums, target) {
-  // Write your code here
-  
+        starter_code: `#include <stdio.h>
+
+int main() {
+    int a, b;
+    // Your code here
+    
+    return 0;
 }
 `,
         test_cases_json: JSON.stringify([
-          { id: 1, input: [[2, 7, 11, 15], 9], expected: [0, 1], isHidden: false },
-          { id: 2, input: [[3, 2, 4], 6], expected: [1, 2], isHidden: false },
-          { id: 3, input: [[3, 3], 6], expected: [0, 1], isHidden: true },
+          { id: 1, input: "5 7", expected: "12", isHidden: false },
+          { id: 2, input: "-3 10", expected: "7", isHidden: false },
+          { id: 3, input: "0 0", expected: "0", isHidden: true },
         ]),
-        hints: JSON.stringify(['Try using a Hash Map to store numbers you have already seen.'])
+        hints: JSON.stringify(["Use scanf(\"%d %d\", &a, &b);", "Use printf(\"%d\", a + b);"])
       },
       {
         id: crypto.randomUUID(),
         course_id: courseId,
         difficulty: 'intermediate',
-        title: 'Valid Parentheses Syntax Matcher',
-        description: `Given a string \`s\` containing just the characters \`'('\`, \`')'\`, \`'{'\`, \`'}'\`, \`'['\` and \`']'\`, determine if the input string is valid.
+        title: 'String Length',
+        description: `Read a single string (without spaces) from standard input and print its length without using \`strlen\`.
 
-### Invariant Rules:
-1. Open brackets must be closed by the same type of brackets.
-2. Open brackets must be closed in the correct order.
-3. Every close bracket has a corresponding open bracket of the same type.
+### Constraints:
+- Use a while loop to iterate until the null terminator \`\\0\` is reached.
+- Maximum string length is 100 characters.
 
-### Example:
+### Example 1:
 \`\`\`
-Input: s = "()[]{}" -> Output: true
-Input: s = "(]" -> Output: false
+Input: hello
+Output: 5
 \`\`\`
 `,
-        starter_code: `/**
- * @param {string} s
- * @return {boolean}
- */
-function isValid(s) {
-  // Write your code here
-  
+        starter_code: `#include <stdio.h>
+
+int main() {
+    char str[101];
+    // Read the string and calculate length
+    
+    return 0;
 }
 `,
         test_cases_json: JSON.stringify([
-          { id: 1, input: ['()'], expected: true, isHidden: false },
-          { id: 2, input: ['()[]{}'], expected: true, isHidden: false },
-          { id: 3, input: ['(]'], expected: false, isHidden: false },
-          { id: 4, input: ['([)]'], expected: false, isHidden: true },
-          { id: 5, input: ['{[]}'], expected: true, isHidden: true },
+          { id: 1, input: "hello", expected: "5", isHidden: false },
+          { id: 2, input: "adaptive", expected: "8", isHidden: false },
+          { id: 3, input: "c", expected: "1", isHidden: true },
         ]),
-        hints: JSON.stringify(['Use a Stack data structure.', 'Push opening brackets, pop and compare for closing brackets.'])
+        hints: JSON.stringify(["Use scanf(\"%s\", str);", "Iterate while str[i] != '\\0'"])
       },
       {
         id: crypto.randomUUID(),
         course_id: courseId,
         difficulty: 'advanced',
-        title: 'Longest Common Subsequence',
-        description: `Given two strings \`text1\` and \`text2\`, return the length of their longest common subsequence. If there is no common subsequence, return \`0\`.
+        title: 'Check Even or Odd',
+        description: `Read a single integer from standard input. Print "Even" if it is even, and "Odd" if it is odd.
 
 ### Example 1:
 \`\`\`
-Input: text1 = "abcde", text2 = "ace"
-Output: 3
-Explanation: The LCS is "ace" which has length 3.
-
-Input: text1 = "abc", text2 = "abc"
-Output: 3
-
-Input: text1 = "abc", text2 = "def"
-Output: 0
+Input: 42
+Output: Even
 \`\`\`
-
-### Constraints:
-- 1 <= text1.length, text2.length <= 1000
-- Expected Time Complexity: O(m x n)
 `,
-        starter_code: `/**
- * @param {string} text1
- * @param {string} text2
- * @return {number}
- */
-function longestCommonSubsequence(text1, text2) {
-  // Write your code here
-  
+        starter_code: `#include <stdio.h>
+
+int main() {
+    int n;
+    // Check if n is even or odd
+    
+    return 0;
 }
 `,
         test_cases_json: JSON.stringify([
-          { id: 1, input: ['abcde', 'ace'], expected: 3, isHidden: false },
-          { id: 2, input: ['abc', 'abc'], expected: 3, isHidden: false },
-          { id: 3, input: ['abc', 'def'], expected: 0, isHidden: false },
-          { id: 4, input: ['pmjghexybyrgzise', 'hafcdqbgncrcbihkd'], expected: 4, isHidden: true },
+          { id: 1, input: "42", expected: "Even", isHidden: false },
+          { id: 2, input: "7", expected: "Odd", isHidden: false },
+          { id: 3, input: "0", expected: "Even", isHidden: true },
         ]),
-        hints: JSON.stringify(['Dynamic Programming is your friend.', 'Build a 2D array dp[i][j] representing the LCS of text1[0..i] and text2[0..j].'])
+        hints: JSON.stringify(["Use the modulo operator % 2."])
       }
     ];
 

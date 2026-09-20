@@ -195,7 +195,9 @@ async function generateWithGemini(courseTitle, difficulty, count) {
       advanced: 'advanced architecture, system-level concepts, concurrency, performance optimization, and highly complex language-specific or topic-specific features',
     };
 
-    const prompt = `You are an expert computer science educator creating a ${difficulty}-level diagnostic exam for a course on "${courseTitle}".
+    const prompt = `You are an expert computer science educator creating a ${difficulty}-level exam for a course on "${courseTitle}".
+
+If the course is about C Programming, topics MUST strictly include: C syntax, control statements, functions, arrays, strings, pointers, dynamic memory management (malloc, calloc, realloc, free), structs, unions, preprocessors/macros, and file I/O.
 
 Generate exactly ${count} multiple-choice questions about ${difficultyGuide[difficulty]}.
 
