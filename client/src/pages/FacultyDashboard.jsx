@@ -132,56 +132,31 @@ export default function FacultyDashboard() {
   }, [activeTab]);
 
   return (
-    <div className="flex min-h-screen bg-gray-950 text-gray-100">
+    <div className="flex min-h-[calc(100vh-4rem)] bg-gray-950 text-gray-100">
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col">
-        <div className="p-6">
-          <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500">
-            PRIVID
-          </h2>
-          <p className="text-xs text-gray-500 uppercase tracking-wider font-bold mt-1">Faculty Portal</p>
-        </div>
-        
-        <nav className="flex-1 px-4 space-y-2">
-          <button
-            onClick={() => setActiveTab('students')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-              activeTab === 'students' ? 'bg-purple-900/30 text-purple-400 border border-purple-500/30' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
-            }`}
-          >
-            <Users className="w-5 h-5" /> My Students
-          </button>
-
-          <button
-            onClick={() => setActiveTab('requests')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-              activeTab === 'requests' ? 'bg-purple-900/30 text-purple-400 border border-purple-500/30' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
-            }`}
-          >
-            <ClipboardCheck className="w-5 h-5" /> Test Requests
-          </button>
-          
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-              activeTab === 'settings' ? 'bg-purple-900/30 text-purple-400 border border-purple-500/30' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
-            }`}
-          >
-            <Settings className="w-5 h-5" /> Settings
-          </button>
+      <aside className="w-64 bg-gray-900 border-r border-gray-800 hidden md:flex flex-col">
+        <nav className="flex-1 px-4 py-6 space-y-2">
+          {[
+            { id: 'overview', label: 'Overview / Analytics', icon: BarChart2 },
+            { id: 'courses', label: 'Course Management', icon: BookOpen },
+            { id: 'exams', label: 'Exam Generator', icon: Database },
+            { id: 'students', label: 'Student Roster', icon: Users },
+            { id: 'requests', label: 'Test Requests', icon: ClipboardCheck },
+            { id: 'settings', label: 'Faculty Settings', icon: Settings }
+          ].map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
+                activeTab === id 
+                  ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(168,85,247,0.15)]' 
+                  : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
+              }`}
+            >
+              <Icon className="w-5 h-5" /> {label}
+            </button>
+          ))}
         </nav>
-        
-        <div className="p-4 border-t border-gray-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center text-purple-400 font-bold border border-purple-500">
-              {user?.firstName?.[0] || 'F'}
-            </div>
-            <div>
-              <p className="text-sm font-bold text-gray-200">{user?.firstName} {user?.lastName}</p>
-              <p className="text-xs text-gray-500">Faculty</p>
-            </div>
-          </div>
-        </div>
       </aside>
 
       {/* Main Content */}
@@ -193,6 +168,12 @@ export default function FacultyDashboard() {
             <div className="flex flex-col items-center justify-center h-64">
               <Loader2 className="w-8 h-8 animate-spin text-purple-500 mb-4" />
               <p className="text-gray-400">Loading data...</p>
+            </div>
+          ) : ['overview', 'courses', 'exams'].includes(activeTab) ? (
+            <div className="flex flex-col items-center justify-center h-64 text-center">
+              <Database className="w-16 h-16 text-gray-800 mb-4" />
+              <h2 className="text-2xl font-bold text-gray-400">Coming Soon</h2>
+              <p className="text-gray-500 mt-2">This module is currently under development for the Faculty Portal.</p>
             </div>
           ) : activeTab === 'requests' ? (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
