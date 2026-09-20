@@ -190,9 +190,9 @@ async function generateWithGemini(courseTitle, difficulty, count) {
     const ai = new GoogleGenAI({ apiKey });
 
     const difficultyGuide = {
-      beginner: 'fundamental concepts, data structures basics (arrays, stacks, queues, sorting), simple complexity analysis',
-      intermediate: 'BST, AVL trees, hash tables, graph traversal, heap operations, algorithm design patterns',
-      advanced: 'dynamic programming, graph algorithms (Dijkstra, Bellman-Ford), concurrency, distributed systems, amortized analysis',
+      beginner: 'fundamental concepts, basic syntax, core principles, and introductory topics related to the course',
+      intermediate: 'intermediate concepts, standard algorithms, memory management, object-oriented or functional patterns depending on the language/course, and practical problem-solving',
+      advanced: 'advanced architecture, system-level concepts, concurrency, performance optimization, and highly complex language-specific or topic-specific features',
     };
 
     const prompt = `You are an expert computer science educator creating a ${difficulty}-level diagnostic exam for a course on "${courseTitle}".
@@ -223,7 +223,11 @@ Respond with ONLY a valid JSON array (no markdown, no explanation):
     const response = await ai.models.generateContent({
       model: 'gemini-1.5-flash',
       contents: prompt,
-      config: { temperature: 0.7, maxOutputTokens: 4096 },
+      config: { 
+        temperature: 0.7, 
+        maxOutputTokens: 4096,
+        responseMimeType: "application/json",
+      },
     });
 
     const raw = response.text?.trim() || '';
