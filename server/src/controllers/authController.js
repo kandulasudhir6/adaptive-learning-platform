@@ -6,30 +6,9 @@ import crypto from 'node:crypto';
 import pool from '../config/db.js';
 import { JWT_SECRET } from '../middlewares/authMiddleware.js';
 
-/**
- * Helper to record day-to-day login activity
- */
-async function recordLoginLog(userId, req) {
-  try {
-    const logId = crypto.randomUUID();
-    const ipAddress = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '127.0.0.1';
-    const deviceInfo = req.headers['user-agent'] || 'Web Browser (EduVibe Platform)';
-
-    await pool.query(
-      `INSERT INTO user_login_logs (id, user_id, login_time, ip_address, device_info)
-       VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)`,
-      [logId, userId, ipAddress, deviceInfo]
-    );
-  } catch (err) {
-    console.error('Failed to record login log:', err.message);
-  }
-}
-
-import admin from '../config/firebaseAdmin.js';
-
 export const register = async (req, res) => {
-  const { idToken, firstName, lastName, role } = req.body;
-  if (!idToken || !firstName || !lastName || !role) {
+  const { idToken, role } = req.body;
+  if (!idToken || !role) {
     return res.status(400).json({ error: 'Missing required fields.' });
   }
 
@@ -40,16 +19,20 @@ export const register = async (req, res) => {
 
   try {
     const decodedToken = await admin.auth().verifyIdToken(idToken);
-    const phoneNumber = decodedToken.phone_number;
-    if (!phoneNumber) return res.status(400).json({ error: 'Phone number not found in token.' });
+    const email = decodedToken.email;
+    const name = decodedToken.name || '';
+    const [firstName, ...rest] = name.split(' ');
+    const lastName = rest.join(' ') || 'User';
 
-    const existing = await pool.query(`SELECT id FROM users WHERE phone = $1`, [phoneNumber]);
-    if (existing.rows.length > 0) return res.status(409).json({ error: 'User with this phone number already exists.' });
+    if (!email) return res.status(400).json({ error: 'Email not found in token.' });
+
+    const existing = await pool.query(`SELECT id FROM users WHERE email = $1`, [email]);
+    if (existing.rows.length > 0) return res.status(409).json({ error: 'User with this email already exists.' });
 
     const userId = crypto.randomUUID();
     await pool.query(
-      `INSERT INTO users (id, first_name, last_name, phone, role) VALUES ($1, $2, $3, $4, $5)`,
-      [userId, firstName, lastName, phoneNumber, role]
+      `INSERT INTO users (id, first_name, last_name, email, role) VALUES ($1, $2, $3, $4, $5)`,
+      [userId, firstName || 'Google', lastName, email, role]
     );
 
     if (role === 'student') await pool.query(`INSERT INTO student_profiles (user_id) VALUES ($1)`, [userId]);
@@ -57,12 +40,12 @@ export const register = async (req, res) => {
     await recordLoginLog(userId, req);
 
     const jwtToken = jwt.sign(
-      { id: userId, phone: phoneNumber, role, firstName, lastName },
+      { id: userId, email, role, firstName, lastName },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    return res.status(201).json({ success: true, token: jwtToken, user: { id: userId, firstName, lastName, phone: phoneNumber, role } });
+    return res.status(201).json({ success: true, token: jwtToken, user: { id: userId, firstName, lastName, email, role } });
   } catch (err) {
     console.error('Registration Error:', err);
     return res.status(500).json({ error: 'Internal server error during registration.' });
@@ -75,10 +58,10 @@ export const login = async (req, res) => {
 
   try {
     const decodedToken = await admin.auth().verifyIdToken(idToken);
-    const phoneNumber = decodedToken.phone_number;
-    if (!phoneNumber) return res.status(400).json({ error: 'Phone number not found in token.' });
+    const email = decodedToken.email;
+    if (!email) return res.status(400).json({ error: 'Email not found in token.' });
 
-    const userRes = await pool.query(`SELECT id, first_name, last_name, email, phone, role FROM users WHERE phone = $1`, [phoneNumber]);
+    const userRes = await pool.query(`SELECT id, first_name, last_name, email, phone, role FROM users WHERE email = $1`, [email]);
     if (userRes.rows.length === 0) return res.status(404).json({ error: 'User not found. Please register first.' });
 
     const user = userRes.rows[0];
@@ -97,7 +80,7 @@ export const login = async (req, res) => {
     });
   } catch (err) {
     console.error('Login Error:', err);
-    return res.status(401).json({ error: 'Invalid or expired phone token.' });
+    return res.status(401).json({ error: 'Invalid or expired Google token.' });
   }
 };
 
