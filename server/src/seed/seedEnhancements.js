@@ -228,7 +228,7 @@ function longestCommonSubsequence(text1, text2) {
     // Maria chose Dr. Robert Vance as mentor
     await query(`
       INSERT INTO student_course_enrollments (id, student_id, course_id, faculty_id, status)
-      VALUES (?, ?, ?, ?, 'active')
+      VALUES (?, ?, ?, ?, 'active') ON CONFLICT DO NOTHING
     `, crypto.randomUUID(), mariaId, courseId, robertId);
 
     // Maria's login logs for last 4 days
@@ -253,7 +253,7 @@ function longestCommonSubsequence(text1, text2) {
     // Alex also chose Dr. Robert Vance
     await query(`
       INSERT INTO student_course_enrollments (id, student_id, course_id, faculty_id, status)
-      VALUES (?, ?, ?, ?, 'active')
+      VALUES (?, ?, ?, ?, 'active') ON CONFLICT DO NOTHING
     `, crypto.randomUUID(), alexId, courseId, robertId);
 
     await query(`
@@ -266,6 +266,7 @@ function longestCommonSubsequence(text1, text2) {
 }
 
 seedEnhancements().catch(console.error);
+
 
 
 
