@@ -1,45 +1,59 @@
 import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
-import pool, { initSchema, rawDb } from '../config/db.js';
+import pool from '../config/db.js';
+import { createSchema } from './schema.js';
 
+
+async function query(sql, ...params) {
+  let i = 1;
+  const pgSql = sql.replace(/\?/g, () => '$' + (i++));
+  const finalSql = pgSql.replace(/INSERT OR REPLACE INTO/gi, 'INSERT INTO');
+  if (sql.trim().toUpperCase().startsWith('SELECT')) {
+    const res = await pool.query(finalSql, params);
+    return res.rows[0];
+  } else {
+    try { await pool.query(finalSql, params); } catch (e) { if (!e.message.includes('duplicate key')) throw e; }
+  }
+}
 export async function seedEnhancements() {
+
   console.log('🔄 Initializing enhanced schema and tables...');
-  initSchema();
+  
 
   const passwordHash = await bcrypt.hash('password123', 10);
 
   // 1. Ensure faculty accounts
-  const robert = rawDb.prepare("SELECT id FROM users WHERE email = 'dr.jenkins@faculty.com'").get();
+  const robert = await query("SELECT id FROM users WHERE email = 'dr.jenkins@faculty.com'");;
   let robertId = robert?.id;
   if (!robertId) {
     robertId = crypto.randomUUID();
-    rawDb.prepare(`
+    await query(`
       INSERT INTO users (id, first_name, last_name, email, password_hash, role)
       VALUES (?, 'Robert', 'Vance', 'dr.jenkins@faculty.com', ?, 'faculty')
-    `).run(robertId, passwordHash);
+    `, robertId, passwordHash);
   }
 
   // Convert or create Sarah as faculty
-  const sarah = rawDb.prepare("SELECT id FROM users WHERE email IN ('prof.sarah@mentor.com', 'prof.sarah@faculty.com')").get();
+  const sarah = await query("SELECT id FROM users WHERE email IN ('prof.sarah@mentor.com', 'prof.sarah@faculty.com')");;
   let sarahId = sarah?.id;
   if (!sarahId) {
     sarahId = crypto.randomUUID();
-    rawDb.prepare(`
+    await query(`
       INSERT INTO users (id, first_name, last_name, email, password_hash, role)
       VALUES (?, 'Sarah', 'Jenkins', 'prof.sarah@faculty.com', ?, 'faculty')
-    `).run(sarahId, passwordHash);
+    `, sarahId, passwordHash);
   } else {
-    rawDb.prepare("UPDATE users SET role = 'faculty', email = 'prof.sarah@faculty.com' WHERE id = ?").run(sarahId);
+    await query("UPDATE users SET role = 'faculty', email = 'prof.sarah@faculty.com' WHERE id = ?", sarahId);
   }
 
   // 2. Fetch student IDs
-  const alex = rawDb.prepare("SELECT id FROM users WHERE email = 'alex@student.com'").get();
-  const maria = rawDb.prepare("SELECT id FROM users WHERE email = 'maria@student.com'").get();
+  const alex = await query("SELECT id FROM users WHERE email = 'alex@student.com'");;
+  const maria = await query("SELECT id FROM users WHERE email = 'maria@student.com'");;
   const alexId = alex?.id;
   const mariaId = maria?.id;
 
   // 3. Seed Faculty Specialized Subjects
-  rawDb.prepare("DELETE FROM faculty_subjects").run();
+  await query("DELETE FROM faculty_subjects", );
 
   const subjects = [
     {
@@ -73,18 +87,18 @@ export async function seedEnhancements() {
   ];
 
   for (const sub of subjects) {
-    rawDb.prepare(`
+    await query(`
       INSERT INTO faculty_subjects (id, faculty_id, subject_name, category, description)
       VALUES (?, ?, ?, ?, ?)
-    `).run(sub.id, sub.faculty_id, sub.subject_name, sub.category, sub.description);
+    `, sub.id, sub.faculty_id, sub.subject_name, sub.category, sub.description);
   }
 
   // 4. Seed Coding Challenges for CodeTantra arena
-  const courseCs101 = rawDb.prepare("SELECT id FROM courses WHERE code = 'C101'").get();
+  const courseCs101 = await query("SELECT id FROM courses WHERE code = 'C101'");;
   const courseId = courseCs101?.id;
 
   if (courseId) {
-    rawDb.prepare("DELETE FROM coding_challenges").run();
+    await query("DELETE FROM coding_challenges", );
 
     const challenges = [
       {
@@ -244,22 +258,22 @@ function longestCommonSubsequence(text1, text2) {
     ];
 
     for (const c of challenges) {
-      rawDb.prepare(`
+      await query(`
         INSERT INTO coding_challenges (id, course_id, difficulty, title, description, starter_code, test_cases_json, hints)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(c.id, c.course_id, c.difficulty, c.title, c.description, c.starter_code, c.test_cases_json, c.hints);
+      `, c.id, c.course_id, c.difficulty, c.title, c.description, c.starter_code, c.test_cases_json, c.hints);
     }
   }
 
   // 5. Seed day-to-day login logs for students
-  rawDb.prepare("DELETE FROM user_login_logs").run();
+  await query("DELETE FROM user_login_logs", );
 
   if (mariaId && robertId) {
     // Maria chose Dr. Robert Vance as mentor
-    rawDb.prepare(`
+    await query(`
       INSERT OR REPLACE INTO student_course_enrollments (id, student_id, course_id, faculty_id, status)
       VALUES (?, ?, ?, ?, 'active')
-    `).run(crypto.randomUUID(), mariaId, courseId, robertId);
+    `, crypto.randomUUID(), mariaId, courseId, robertId);
 
     // Maria's login logs for last 4 days
     const now = Date.now();
@@ -272,24 +286,24 @@ function longestCommonSubsequence(text1, text2) {
     ];
 
     for (const l of pastLogins) {
-      rawDb.prepare(`
+      await query(`
         INSERT INTO user_login_logs (id, user_id, login_time, ip_address, device_info)
         VALUES (?, ?, ?, ?, ?)
-      `).run(crypto.randomUUID(), mariaId, l.time, l.ip, l.device);
+      `, crypto.randomUUID(), mariaId, l.time, l.ip, l.device);
     }
   }
 
   if (alexId && robertId) {
     // Alex also chose Dr. Robert Vance
-    rawDb.prepare(`
+    await query(`
       INSERT OR REPLACE INTO student_course_enrollments (id, student_id, course_id, faculty_id, status)
       VALUES (?, ?, ?, ?, 'active')
-    `).run(crypto.randomUUID(), alexId, courseId, robertId);
+    `, crypto.randomUUID(), alexId, courseId, robertId);
 
-    rawDb.prepare(`
+    await query(`
       INSERT INTO user_login_logs (id, user_id, login_time, ip_address, device_info)
       VALUES (?, ?, CURRENT_TIMESTAMP, '127.0.0.1', 'Chrome 128 / Windows 11 (Student Station)')
-    `).run(crypto.randomUUID(), alexId);
+    `, crypto.randomUUID(), alexId);
   }
 
   console.log('✅ Enhancements seeded: Faculty accounts, Specialized Subjects, CodeTantra Challenges & Day-to-Day Logins!');

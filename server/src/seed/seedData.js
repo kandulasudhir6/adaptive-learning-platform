@@ -1,14 +1,28 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
-import pool, { initSchema, rawDb } from '../config/db.js';
+import pool from '../config/db.js';
+import { createSchema } from './schema.js';
 
+
+async function query(sql, ...params) {
+  let i = 1;
+  const pgSql = sql.replace(/\?/g, () => '$' + (i++));
+  const finalSql = pgSql.replace(/INSERT OR REPLACE INTO/gi, 'INSERT INTO');
+  if (sql.trim().toUpperCase().startsWith('SELECT')) {
+    const res = await pool.query(finalSql, params);
+    return res.rows[0];
+  } else {
+    try { await pool.query(finalSql, params); } catch (e) { if (!e.message.includes('duplicate key')) throw e; }
+  }
+}
 export async function seedDatabase() {
+
   console.log('🔄 Initializing database schema...');
-  initSchema();
+  await createSchema();
 
   // Check if already seeded
-  const checkUsers = rawDb.prepare('SELECT COUNT(*) as cnt FROM users').get();
-  const checkCourses = rawDb.prepare('SELECT COUNT(*) as cnt FROM courses').get();
+  const checkUsers = await query('SELECT COUNT(*) as cnt FROM users');;
+  const checkCourses = await query('SELECT COUNT(*) as cnt FROM courses');;
   if (checkUsers && checkUsers.cnt > 0 && checkCourses && checkCourses.cnt > 0) {
     console.log('Database already contains records. Skipping initial seeding.');
     return;
@@ -17,6 +31,7 @@ export async function seedDatabase() {
 
   console.log('🌱 Seeding initial data for Adaptive Learning Platform...');
 
+  await pool.query('TRUNCATE users CASCADE; TRUNCATE courses CASCADE;');
   const passwordHash = await bcrypt.hash('password123', 10);
 
   // 1. Create Users
@@ -64,10 +79,10 @@ export async function seedDatabase() {
   ];
 
   for (const u of users) {
-    rawDb.prepare(`
+    await query(`
       INSERT OR REPLACE INTO users (id, first_name, last_name, email, password_hash, role)
       VALUES (?, ?, ?, ?, ?, ?)
-    `).run(u.id, u.first_name, u.last_name, u.email, u.password_hash, u.role);
+    `, u.id, u.first_name, u.last_name, u.email, u.password_hash, u.role);
   }
 
   const mentorId = users[0].id;
@@ -77,35 +92,35 @@ export async function seedDatabase() {
 
   // 2. Student Profiles
   // Alex: Fresh student who hasn't taken Entrance Exam
-  rawDb.prepare(`
+  await query(`
     INSERT OR REPLACE INTO student_profiles (user_id, assigned_mentor_id, assigned_faculty_id, current_level, entrance_completed)
     VALUES (?, ?, ?, 'beginner', 0)
-  `).run(alexId, mentorId, facultyId);
+  `, alexId, mentorId, facultyId);
 
   // Maria: Has completed entrance exam, placed in Intermediate
-  rawDb.prepare(`
+  await query(`
     INSERT OR REPLACE INTO student_profiles (user_id, assigned_mentor_id, assigned_faculty_id, current_level, entrance_completed)
     VALUES (?, ?, ?, 'intermediate', 1)
-  `).run(mariaId, mentorId, facultyId);
+  `, mariaId, mentorId, facultyId);
 
   // 3. Courses
   const courseCs101Id = crypto.randomUUID();
   const courseWeb201Id = crypto.randomUUID();
 
-  rawDb.prepare(`
+  await query(`
     INSERT OR REPLACE INTO courses (id, title, code, description)
     VALUES (?, ?, ?, ?)
-  `).run(
+  `, 
     courseCs101Id,
     'C Programming Language: Zero to Hero',
     'C101',
     'Master the C language fundamentals including pointers, memory management, data types, and systems programming.'
   );
 
-  rawDb.prepare(`
+  await query(`
     INSERT OR REPLACE INTO courses (id, title, code, description)
     VALUES (?, ?, ?, ?)
-  `).run(
+  `, 
     courseWeb201Id,
     'Web Architecture & Modern Full-Stack Systems',
     'WEB201',
@@ -449,10 +464,10 @@ In large distributed caching systems, consistent hashing maps both servers and d
   ];
 
   for (const mod of modules) {
-    rawDb.prepare(`
+    await query(`
       INSERT OR REPLACE INTO modules (id, course_id, title, level, sequence_order, study_time_recommended, content_body)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `, 
       mod.id,
       mod.course_id,
       mod.title,
@@ -773,10 +788,10 @@ In large distributed caching systems, consistent hashing maps both servers and d
   ];
 
   for (const q of questions) {
-    rawDb.prepare(`
+    await query(`
       INSERT OR REPLACE INTO question_bank (id, course_id, difficulty, question_text, option_a, option_b, option_c, option_d, correct_option)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `, 
       crypto.randomUUID(),
       q.course_id,
       q.difficulty,
@@ -791,15 +806,15 @@ In large distributed caching systems, consistent hashing maps both servers and d
 
   // 6. Seed sample progress and pending test request for Maria
   const mariaModule = modules[3]; // Module 2.1 Linked Lists
-  rawDb.prepare(`
+  await query(`
     INSERT OR REPLACE INTO student_module_progress (student_id, module_id, time_spent_minutes, is_completed)
     VALUES (?, ?, 195, 1)
-  `).run(mariaId, mariaModule.id);
+  `, mariaId, mariaModule.id);
 
-  rawDb.prepare(`
+  await query(`
     INSERT OR REPLACE INTO test_requests (id, student_id, module_id, reviewer_id, status, time_spent_minutes)
     VALUES (?, ?, ?, ?, 'pending', 195)
-  `).run(crypto.randomUUID(), mariaId, mariaModule.id, mentorId);
+  `, crypto.randomUUID(), mariaId, mariaModule.id, mentorId);
 
   console.log('✅ Database seeded successfully!');
   console.log(`- Users: ${users.length}`);
