@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
 import LevelBadge from '../components/LevelBadge';
@@ -147,7 +147,55 @@ export default function StudentDashboard({ onOpenExam, onOpenModule, onOpenPerio
           </div>
         )}
 
-        {/* Hero Banner (Only on Dashboard) */}
+        
+            {!user?.enrolledCourse ? (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-3xl p-8 sm:p-10 shadow-2xl relative overflow-hidden border border-indigo-500/30">
+                  <div className="relative z-10 max-w-xl">
+                    <p className="text-xs font-semibold text-purple-400 uppercase tracking-widest mb-1">Student Portal</p>
+                    <h1 className="text-3xl md:text-4xl font-black text-gray-100">Welcome, {user?.firstName}</h1>
+                    <p className="text-gray-400 mt-2">Before you begin, please enroll in a course.</p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 text-center mt-6 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
+                  <h2 className="text-2xl font-bold text-white mb-4">Enroll in a Course to Begin</h2>
+                  <p className="text-gray-400 mb-8 max-w-md mx-auto">Select a course and a faculty mentor to start your adaptive learning journey.</p>
+                  <div className="max-w-md mx-auto space-y-4">
+                    <select 
+                      className="w-full px-4 py-3 rounded-xl bg-gray-950 border border-gray-800 text-gray-100 font-bold focus:outline-none focus:border-indigo-500"
+                      value={selectedCourse?.id || ''}
+                      onChange={(e) => {
+                        const c = courses.find(course => course.id === e.target.value);
+                        if (c) { setSelectedCourse(c); loadCourseContent(c.id); }
+                      }}
+                    >
+                      <option value="" disabled>Select Course...</option>
+                      {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+                    </select>
+                    
+                    <select 
+                      className="w-full px-4 py-3 rounded-xl bg-gray-950 border border-gray-800 text-gray-100 font-bold focus:outline-none focus:border-indigo-500"
+                      value={selectedFacultyId || ''}
+                      onChange={(e) => setSelectedFacultyId(e.target.value)}
+                    >
+                      <option value="" disabled>Select Mentor...</option>
+                      {faculties.map(f => <option key={f.id} value={f.id}>Dr. {f.first_name} {f.last_name}</option>)}
+                    </select>
+                    
+                    <button 
+                      onClick={handleEnroll}
+                      disabled={enrolling || !selectedCourse || !selectedFacultyId}
+                      className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition shadow-[0_0_15px_rgba(79,70,229,0.3)] disabled:opacity-50"
+                    >
+                      {enrolling ? 'Enrolling...' : 'Enroll Now'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+{/* Hero Banner (Only on Dashboard) */}
         {activeTab === 'dashboard' && (
           <div className="bg-gray-900 border-b border-gray-800">
             <div className="max-w-6xl mx-auto px-6 py-10">
@@ -399,7 +447,12 @@ export default function StudentDashboard({ onOpenExam, onOpenModule, onOpenPerio
           )}
 
         </div>
-      </main>
+      
+              </>
+            )}
+  
+        </main>
+
     </div>
   );
 }

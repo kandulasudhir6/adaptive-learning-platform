@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Database, Zap, Settings, CheckSquare } from 'lucide-react';
 
 export default function FacultyExamGenerator() {

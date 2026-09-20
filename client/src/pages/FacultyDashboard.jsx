@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
 import RoadmapViewer from '../components/RoadmapViewer';
@@ -22,7 +22,7 @@ function Notice({ notice, onClose }) {
           : <AlertCircle className="w-5 h-5 shrink-0 text-red-400" />
         }
         <span>{notice.message}</span>
-        <button className="ml-auto text-xs opacity-60 hover:opacity-100 cursor-pointer" onClick={onClose}>✕</button>
+        <button className="ml-auto text-xs opacity-60 hover:opacity-100 cursor-pointer" onClick={onClose}>âœ•</button>
       </div>
     </div>
   );

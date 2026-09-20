@@ -1,4 +1,4 @@
-import React from 'react';
+ï»¿import React from 'react';
 import { Users, Activity, CheckCircle, AlertTriangle } from 'lucide-react';
 
 export default function FacultyOverview() {
@@ -79,21 +79,21 @@ export default function FacultyOverview() {
               <CheckCircle className="w-5 h-5 text-green-400 mt-0.5" />
               <div>
                 <p className="text-gray-200 font-medium">Maria S. completed C Fundamentals Diagnostic</p>
-                <p className="text-gray-500 text-sm">2 hours ago • Scored 90%</p>
+                <p className="text-gray-500 text-sm">2 hours ago â€¢ Scored 90%</p>
               </div>
             </div>
             <div className="flex gap-4 items-start p-3 bg-red-900/20 border border-red-900/50 rounded-lg">
               <AlertTriangle className="w-5 h-5 text-red-400 mt-0.5" />
               <div>
                 <p className="text-gray-200 font-medium">Alex M. is struggling with Pointers & Memory</p>
-                <p className="text-gray-500 text-sm">4 hours ago • Failed coding round 3 times</p>
+                <p className="text-gray-500 text-sm">4 hours ago â€¢ Failed coding round 3 times</p>
               </div>
             </div>
             <div className="flex gap-4 items-start p-3 bg-gray-800/40 rounded-lg">
               <CheckCircle className="w-5 h-5 text-green-400 mt-0.5" />
               <div>
                 <p className="text-gray-200 font-medium">Jason T. passed Structs & File Operations</p>
-                <p className="text-gray-500 text-sm">Yesterday • Scored 85%</p>
+                <p className="text-gray-500 text-sm">Yesterday â€¢ Scored 85%</p>
               </div>
             </div>
           </div>
