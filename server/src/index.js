@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
+import cookieParser from 'cookie-parser';
 
 // Routes
 import authRoutes from './routes/authRoutes.js';
@@ -23,45 +24,39 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+app.use(cookieParser());
+
+// Enable CORS for frontend development and Mobile Network Origins
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow mobile webviews (often null origin) and any remote connection
+      callback(null, origin || '*');
+    },
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true, // Crucial for mobile session cookies
+  })
+);
+
+app.use(express.json());
+
 // Auto-seed check for missing courses
 try {
   const courseCheck = await pool.query('SELECT COUNT(*) as cnt FROM courses');
   if (!courseCheck.rows[0] || courseCheck.rows[0].cnt === '0' || courseCheck.rows[0].cnt === 0) {
-    console.log('🌱 Critical tables empty! Force running seedData...');
+    console.log('dYO Critical tables empty! Force running seedData...');
     import('./seed/seedData.js').then(s => s.seedDatabase()).catch(console.error);
   }
 } catch (err) {
   console.error('Error checking courses on startup:', err);
 }
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Enable CORS for frontend development
-app.use(
-  cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
-);
-
-app.use(express.json());
-
-// Initialize and auto-seed database
-try {
-  await seedDatabase();
-  await seedEnhancements();
-} catch (err) {
-  console.error('Database initialization error:', err);
-}
-
 // Mount API routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/exams', examRoutes);
-app.use('/api/v1/tests', examRoutes); // Supports /api/v1/tests/request-access
+app.use('/api/v1/tests', examRoutes); 
 app.use('/api/v1/faculty', facultyRoutes);
 app.use('/api/v1/code', codeRoutes);
 
@@ -70,9 +65,8 @@ app.get('/api/v1/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Serve compiled frontend assets if available (Production unified deployment)
+// Serve compiled frontend assets if available
 const clientDistPath = path.resolve(__dirname, '../../client/dist');
-
 if (fs.existsSync(clientDistPath)) {
   app.use(express.static(clientDistPath));
   app.get('*', (req, res, next) => {
@@ -90,8 +84,6 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Adaptive Learning Platform API Server running on port ${PORT}`);
-  console.log(`📡 Health check available at http://localhost:${PORT}/api/v1/health`);
+  console.log(`dYs? Adaptive Learning Platform API Server running on port ${PORT}`);
+  console.log(`dY" Health check available at http://localhost:${PORT}/api/v1/health`);
 });
-
-

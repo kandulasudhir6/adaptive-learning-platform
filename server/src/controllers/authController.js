@@ -30,7 +30,7 @@ export const register = async (req, res) => {
   const { firstName, lastName, email, password, role = 'student' } = req.body;
 
   if (!firstName || !lastName || !email || !password) {
-    return res.status(400).json({ error: 'All fields are required.' });
+return res.status(400).json({ error: 'All fields are required.' });
   }
   
   // Student default, faculty via admin/preset
@@ -86,7 +86,14 @@ export const register = async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    return res.status(201).json({
+        // Set HTTP-Only session cookie for mobile/webview compatibility
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+return res.status(201).json({
       success: true,
       message: 'Account registered successfully.',
       token,
@@ -103,7 +110,7 @@ export const register = async (req, res) => {
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Registration Error:', err);
-    return res.status(500).json({ error: 'Internal server error during registration.' });
+return res.status(401).json({ error: 'Registration failed due to a server error.' });
   } finally {
     client.release();
   }
@@ -179,7 +186,14 @@ const { email, password } = req.body;
       { expiresIn: '7d' }
     );
 
-    return res.status(200).json({
+        // Set HTTP-Only session cookie for mobile/webview compatibility
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+return res.status(200).json({
       success: true,
       token,
       user: {
@@ -197,7 +211,7 @@ const { email, password } = req.body;
     });
   } catch (err) {
     console.error('Login Error:', err);
-    return res.status(500).json({ error: 'Internal server error during login.' });
+return res.status(401).json({ error: 'Authentication failed. Please check your credentials and try again.' });
   }
 };
 
@@ -229,8 +243,7 @@ export const initiateFacultyQRSession = async (req, res) => {
       issuedAt: new Date().toISOString(),
       expiresAt,
     });
-
-    return res.status(201).json({
+return res.status(201).json({
       success: true,
       sessionId,
       sessionToken,
@@ -267,7 +280,7 @@ export const checkFacultyQRSessionStatus = async (req, res) => {
 
     // Check expiry
     if (new Date(session.expires_at) < new Date()) {
-      return res.status(410).json({ status: 'expired', error: 'QR code expired. Please refresh.' });
+return res.status(410).json({ status: 'expired', error: 'QR code expired. Please refresh.' });
     }
 
     if (session.status === 'verified') {
@@ -286,7 +299,14 @@ export const checkFacultyQRSessionStatus = async (req, res) => {
         { expiresIn: '7d' }
       );
 
-      return res.status(200).json({
+          // Set HTTP-Only session cookie for mobile/webview compatibility
+    res.cookie('token', jwtToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+return res.status(200).json({
         success: true,
         status: 'verified',
         token: jwtToken,
@@ -299,8 +319,7 @@ export const checkFacultyQRSessionStatus = async (req, res) => {
         },
       });
     }
-
-    return res.status(200).json({
+return res.status(200).json({
       success: true,
       status: 'pending',
       message: 'Waiting for faculty mobile scan verification...',
@@ -330,7 +349,7 @@ export const verifyFacultyQRSession = async (req, res) => {
     );
 
     if (facultyRes.rows.length === 0) {
-      return res.status(404).json({ error: 'Faculty profile not found.' });
+return res.status(404).json({ error: 'Faculty profile not found.' });
     }
 
     const faculty = facultyRes.rows[0];
@@ -357,7 +376,14 @@ export const verifyFacultyQRSession = async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    return res.status(200).json({
+        // Set HTTP-Only session cookie for mobile/webview compatibility
+    res.cookie('token', jwtToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+return res.status(200).json({
       success: true,
       status: 'verified',
       token: jwtToken,

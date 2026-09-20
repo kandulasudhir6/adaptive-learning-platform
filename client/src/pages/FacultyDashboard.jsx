@@ -3,6 +3,11 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
 import RoadmapViewer from '../components/RoadmapViewer';
 import LevelBadge from '../components/LevelBadge';
+
+import FacultyOverview from '../components/FacultyOverview';
+import FacultyCourseManagement from '../components/FacultyCourseManagement';
+import FacultyExamGenerator from '../components/FacultyExamGenerator';
+
 import { Users, BookOpen, Upload, CheckCircle2, AlertCircle, Clock, Map, Loader2, Save, ChevronDown, ChevronUp, BarChart3, Edit3, User, ClipboardCheck, Settings, Shield, BarChart2, Database } from 'lucide-react';
 
 function Notice({ notice, onClose }) {
@@ -167,11 +172,13 @@ export default function FacultyDashboard() {
               <p className="text-gray-400">Loading data...</p>
             </div>
           ) : ['overview', 'courses', 'exams'].includes(activeTab) ? (
-            <div className="flex flex-col items-center justify-center h-64 text-center">
-              <Database className="w-16 h-16 text-gray-800 mb-4" />
-              <h2 className="text-2xl font-bold text-gray-400">Coming Soon</h2>
-              <p className="text-gray-500 mt-2">This module is currently under development for the Faculty Portal.</p>
-            </div>
+            
+              <>
+                {activeTab === 'overview' && <FacultyOverview />}
+                {activeTab === 'courses' && <FacultyCourseManagement />}
+                {activeTab === 'exams' && <FacultyExamGenerator />}
+              </>
+
           ) : activeTab === 'requests' ? (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex items-center justify-between mb-8">
