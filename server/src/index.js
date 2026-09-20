@@ -11,7 +11,7 @@ import courseRoutes from './routes/courseRoutes.js';
 import examRoutes from './routes/examRoutes.js';
 import facultyRoutes from './routes/facultyRoutes.js';
 import codeRoutes from './routes/codeRoutes.js';
-import pool from './config/db.js';
+import pool, { rawDb } from './config/db.js';
 import { seedDatabase } from './seed/seedData.js';
 import { seedEnhancements } from './seed/seedEnhancements.js';
 
@@ -22,6 +22,17 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Auto-seed check for missing courses
+try {
+  const courseCheck = await pool.query('SELECT COUNT(*) as cnt FROM courses');
+  if (!courseCheck.rows[0] || courseCheck.rows[0].cnt === '0' || courseCheck.rows[0].cnt === 0) {
+    console.log('🌱 Critical tables empty! Force running seedData...');
+    import('./seed/seedData.js').then(s => s.seedDatabase()).catch(console.error);
+  }
+} catch (err) {
+  console.error('Error checking courses on startup:', err);
+}
 
 // Middleware
 app.use(cors());

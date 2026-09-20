@@ -7,14 +7,10 @@ import { createSchema } from './schema.js';
 async function query(sql, ...params) {
   let i = 1;
   const pgSql = sql.replace(/\?/g, () => '$' + (i++));
-  const finalSql = pgSql.replace(/INSERT OR REPLACE INTO/gi, 'INSERT INTO');
-  if (sql.trim().toUpperCase().startsWith('SELECT')) {
-    const res = await pool.query(finalSql, params);
-    return res.rows[0];
-  } else {
-    try { await pool.query(finalSql, params); } catch (e) { if (!e.message.includes('duplicate key')) throw e; }
-  }
+  const finalSql = pgSql.replace(/INSERT INTO/g, 'INSERT INTO');
+  return await pool.query(finalSql, params);
 }
+
 export async function seedEnhancements() {
 
   console.log('🔄 Initializing enhanced schema and tables...');
@@ -23,7 +19,7 @@ export async function seedEnhancements() {
   const passwordHash = await bcrypt.hash('password123', 10);
 
   // 1. Ensure faculty accounts
-  const robert = await query("SELECT id FROM users WHERE email = 'dr.jenkins@faculty.com'");;
+  const robert = await query("SELECT id FROM users WHERE email = 'dr.jenkins@faculty.com'").get();
   let robertId = robert?.id;
   if (!robertId) {
     robertId = crypto.randomUUID();
@@ -34,7 +30,7 @@ export async function seedEnhancements() {
   }
 
   // Convert or create Sarah as faculty
-  const sarah = await query("SELECT id FROM users WHERE email IN ('prof.sarah@mentor.com', 'prof.sarah@faculty.com')");;
+  const sarah = await pool.query('SELECT id FROM users WHERE email IN ('prof.sarah@mentor.com', 'prof.sarah@faculty.com')').then(res => res.rows[0]);
   let sarahId = sarah?.id;
   if (!sarahId) {
     sarahId = crypto.randomUUID();
@@ -47,13 +43,13 @@ export async function seedEnhancements() {
   }
 
   // 2. Fetch student IDs
-  const alex = await query("SELECT id FROM users WHERE email = 'alex@student.com'");;
-  const maria = await query("SELECT id FROM users WHERE email = 'maria@student.com'");;
+  const alex = await query("SELECT id FROM users WHERE email = 'alex@student.com'").get();
+  const maria = await pool.query('SELECT id FROM users WHERE email = 'maria@student.com'').then(res => res.rows[0]);
   const alexId = alex?.id;
   const mariaId = maria?.id;
 
   // 3. Seed Faculty Specialized Subjects
-  await query("DELETE FROM faculty_subjects", );
+  await query("DELETE FROM faculty_subjects");
 
   const subjects = [
     {
@@ -94,11 +90,11 @@ export async function seedEnhancements() {
   }
 
   // 4. Seed Coding Challenges for CodeTantra arena
-  const courseCs101 = await query("SELECT id FROM courses WHERE code = 'C101'");;
+  const courseCs101 = await query("SELECT id FROM courses WHERE code = 'C101'").get();
   const courseId = courseCs101?.id;
 
   if (courseId) {
-    await query("DELETE FROM coding_challenges", );
+    await query("DELETE FROM coding_challenges");
 
     const challenges = [
       {
@@ -271,7 +267,7 @@ function longestCommonSubsequence(text1, text2) {
   if (mariaId && robertId) {
     // Maria chose Dr. Robert Vance as mentor
     await query(`
-      INSERT OR REPLACE INTO student_course_enrollments (id, student_id, course_id, faculty_id, status)
+      INSERT INTO student_course_enrollments (id, student_id, course_id, faculty_id, status)
       VALUES (?, ?, ?, ?, 'active')
     `, crypto.randomUUID(), mariaId, courseId, robertId);
 
@@ -296,7 +292,7 @@ function longestCommonSubsequence(text1, text2) {
   if (alexId && robertId) {
     // Alex also chose Dr. Robert Vance
     await query(`
-      INSERT OR REPLACE INTO student_course_enrollments (id, student_id, course_id, faculty_id, status)
+      INSERT INTO student_course_enrollments (id, student_id, course_id, faculty_id, status)
       VALUES (?, ?, ?, ?, 'active')
     `, crypto.randomUUID(), alexId, courseId, robertId);
 
@@ -310,3 +306,4 @@ function longestCommonSubsequence(text1, text2) {
 }
 
 seedEnhancements().catch(console.error);
+

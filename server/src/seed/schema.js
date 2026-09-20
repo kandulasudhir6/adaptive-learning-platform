@@ -6,16 +6,14 @@ export async function createSchema() {
       id TEXT PRIMARY KEY,
       first_name TEXT NOT NULL,
       last_name TEXT NOT NULL,
-      phone TEXT UNIQUE,
-      email TEXT UNIQUE,
-      password_hash TEXT,
-      role TEXT NOT NULL CHECK(role IN ('student', 'faculty', 'mentor', 'admin')),
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL CHECK (role IN ('student', 'faculty', 'admin')),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS student_profiles (
       user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-      assigned_mentor_id TEXT REFERENCES users(id) ON DELETE SET NULL,
       assigned_faculty_id TEXT REFERENCES users(id) ON DELETE SET NULL,
       current_level TEXT DEFAULT 'beginner' CHECK(current_level IN ('beginner', 'intermediate', 'advanced')),
       entrance_completed INTEGER DEFAULT 0
@@ -23,8 +21,8 @@ export async function createSchema() {
 
     CREATE TABLE IF NOT EXISTS courses (
       id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
       code TEXT UNIQUE NOT NULL,
+      title TEXT NOT NULL,
       description TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
@@ -33,17 +31,16 @@ export async function createSchema() {
       id TEXT PRIMARY KEY,
       course_id TEXT REFERENCES courses(id) ON DELETE CASCADE,
       title TEXT NOT NULL,
-      level TEXT NOT NULL CHECK(level IN ('beginner', 'intermediate', 'advanced')),
+      description TEXT,
+      level TEXT NOT NULL CHECK (level IN ('beginner', 'intermediate', 'advanced')),
       sequence_order INTEGER NOT NULL,
-      study_time_recommended INTEGER NOT NULL,
-      content_body TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      content TEXT
     );
 
     CREATE TABLE IF NOT EXISTS question_bank (
       id TEXT PRIMARY KEY,
       course_id TEXT REFERENCES courses(id) ON DELETE CASCADE,
-      difficulty TEXT NOT NULL CHECK(difficulty IN ('beginner', 'intermediate', 'advanced')),
+      difficulty TEXT NOT NULL CHECK (difficulty IN ('beginner', 'intermediate', 'advanced')),
       question_text TEXT NOT NULL,
       option_a TEXT NOT NULL,
       option_b TEXT NOT NULL,
