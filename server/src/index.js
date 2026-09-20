@@ -11,7 +11,7 @@ import courseRoutes from './routes/courseRoutes.js';
 import examRoutes from './routes/examRoutes.js';
 import facultyRoutes from './routes/facultyRoutes.js';
 import codeRoutes from './routes/codeRoutes.js';
-import pool, { rawDb } from './config/db.js';
+import pool from './config/db.js';
 import { seedDatabase } from './seed/seedData.js';
 import { seedEnhancements } from './seed/seedEnhancements.js';
 

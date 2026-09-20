@@ -19,7 +19,7 @@ export async function seedEnhancements() {
   const passwordHash = await bcrypt.hash('password123', 10);
 
   // 1. Ensure faculty accounts
-  const robert = await query("SELECT id FROM users WHERE email = 'dr.jenkins@faculty.com'").get();
+  const robert = await query("SELECT id FROM users WHERE email = 'dr.jenkins@faculty.com'").then(res => res.rows[0]);
   let robertId = robert?.id;
   if (!robertId) {
     robertId = crypto.randomUUID();
@@ -30,7 +30,7 @@ export async function seedEnhancements() {
   }
 
   // Convert or create Sarah as faculty
-  const sarah = await pool.query('SELECT id FROM users WHERE email IN ('prof.sarah@mentor.com', 'prof.sarah@faculty.com')').then(res => res.rows[0]);
+  const sarah = await pool.query("SELECT id FROM users WHERE email IN ('prof.sarah@mentor.com', 'prof.sarah@faculty.com')").then(res => res.rows[0]);
   let sarahId = sarah?.id;
   if (!sarahId) {
     sarahId = crypto.randomUUID();
@@ -43,8 +43,8 @@ export async function seedEnhancements() {
   }
 
   // 2. Fetch student IDs
-  const alex = await query("SELECT id FROM users WHERE email = 'alex@student.com'").get();
-  const maria = await pool.query('SELECT id FROM users WHERE email = 'maria@student.com'').then(res => res.rows[0]);
+  const alex = await query("SELECT id FROM users WHERE email = 'alex@student.com'").then(res => res.rows[0]);
+  const maria = await pool.query("SELECT id FROM users WHERE email = 'maria@student.com'").then(res => res.rows[0]);
   const alexId = alex?.id;
   const mariaId = maria?.id;
 
@@ -306,4 +306,5 @@ function longestCommonSubsequence(text1, text2) {
 }
 
 seedEnhancements().catch(console.error);
+
 
