@@ -37,7 +37,7 @@ export default function StudentDashboard({ onOpenExam, onOpenModule, onOpenPerio
         setCourses(coursesRes.courses);
         let primary = null;
         if (user?.enrolledCourse?.course_id) {
-          primary = coursesRes.courses.find(c => c.id === user.enrolledCourse.course_id);
+          primary = coursesRes.courses.find(c => c.id == user.enrolledCourse.course_id);
         }
         if (!primary) {
           primary = coursesRes.courses[0];
@@ -292,7 +292,21 @@ export default function StudentDashboard({ onOpenExam, onOpenModule, onOpenPerio
               <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-5 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Selected Course</label>
-                  <div className="px-4 py-3 rounded-xl bg-gray-950 border border-gray-800 text-gray-100 text-sm font-medium">{selectedCourse?.title || 'No course available'}</div>
+                  <select 
+                      className="w-full px-4 py-3 rounded-xl bg-gray-950 border border-gray-800 text-gray-100 text-sm font-medium focus:outline-none focus:border-indigo-500"
+                      value={selectedCourse?.id || ''}
+                      onChange={(e) => {
+                        const c = courses.find(course => course.id === e.target.value);
+                        if (c) {
+                          setSelectedCourse(c);
+                          loadCourseContent(c.id);
+                        }
+                      }}
+                    >
+                      {courses.map(c => (
+                        <option key={c.id} value={c.id}>{c.title}</option>
+                      ))}
+                    </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Choose Faculty Mentor</label>
