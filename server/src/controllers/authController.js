@@ -25,198 +25,79 @@ async function recordLoginLog(userId, req) {
   }
 }
 
-/**
- * Student Registration
- */
+import admin from '../config/firebaseAdmin.js';
+
 export const register = async (req, res) => {
-  const { firstName, lastName, email, password, role = 'student', otp } = req.body;
-
-  if (!firstName || !lastName || !email || !password || !otp) {
-    return res.status(400).json({ error: 'All fields including OTP are required.' });
+  const { idToken, firstName, lastName, role } = req.body;
+  if (!idToken || !firstName || !lastName || !role) {
+    return res.status(400).json({ error: 'Missing required fields.' });
   }
 
-  const storedData = otpStore.get(email.toLowerCase().trim());
-  if (!storedData || storedData.otp !== otp || Date.now() > storedData.expires) {
-    return res.status(401).json({ error: 'Invalid or expired verification code.' });
+  const validRoles = ['student', 'faculty', 'mentor', 'admin'];
+  if (!validRoles.includes(role)) {
+    return res.status(400).json({ error: 'Invalid role.' });
   }
-  // Do not delete OTP here yet, let it be consumed successfully first or delete after.
-  
-  // Student default, faculty via admin/preset
-  const userRole = role === 'faculty' ? 'faculty' : 'student';
 
-  const client = await pool.connect();
   try {
-    await client.query('BEGIN');
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const phoneNumber = decodedToken.phone_number;
+    if (!phoneNumber) return res.status(400).json({ error: 'Phone number not found in token.' });
 
-    // Check duplicate email
-    const existing = await client.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase().trim()]);
-    if (existing.rows.length > 0) {
-      await client.query('ROLLBACK');
-      return res.status(409).json({ error: 'An account with this email already exists.' });
-    }
+    const existing = await pool.query(`SELECT id FROM users WHERE phone = $1`, [phoneNumber]);
+    if (existing.rows.length > 0) return res.status(409).json({ error: 'User with this phone number already exists.' });
 
-    const passwordHash = await bcrypt.hash(password, 10);
     const userId = crypto.randomUUID();
-
-    // Insert user
-    await client.query(
-      `INSERT INTO users (id, first_name, last_name, email, password_hash, role)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [userId, firstName.trim(), lastName.trim(), email.toLowerCase().trim(), passwordHash, userRole]
+    await pool.query(
+      `INSERT INTO users (id, first_name, last_name, phone, role) VALUES ($1, $2, $3, $4, $5)`,
+      [userId, firstName, lastName, phoneNumber, role]
     );
 
-    // If student, create student profile & assign default faculty mentor
-    if (userRole === 'student') {
-      const facultyRes = await client.query(`SELECT id FROM users WHERE role = 'faculty' LIMIT 1`);
-      const facultyId = facultyRes.rows[0]?.id || null;
+    if (role === 'student') await pool.query(`INSERT INTO student_profiles (user_id) VALUES ($1)`, [userId]);
 
-      await client.query(
-        `INSERT INTO student_profiles (user_id, assigned_faculty_id, current_level, entrance_completed)
-         VALUES ($1, $2, 'beginner', 0)`,
-        [userId, facultyId]
-      );
-    }
-
-    await client.query('COMMIT');
-    otpStore.delete(email.toLowerCase().trim());
-
-    // Record login log
     await recordLoginLog(userId, req);
 
-    const token = jwt.sign(
-      {
-        id: userId,
-        email: email.toLowerCase().trim(),
-        role: userRole,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-      },
+    const jwtToken = jwt.sign(
+      { id: userId, phone: phoneNumber, role, firstName, lastName },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    return res.status(201).json({
-      success: true,
-      message: 'Account registered successfully.',
-      token,
-      user: {
-        id: userId,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        email: email.toLowerCase().trim(),
-        role: userRole,
-        entranceCompleted: false,
-        currentLevel: 'beginner',
-      },
-    });
+    return res.status(201).json({ success: true, token: jwtToken, user: { id: userId, firstName, lastName, phone: phoneNumber, role } });
   } catch (err) {
-    await client.query('ROLLBACK');
     console.error('Registration Error:', err);
     return res.status(500).json({ error: 'Internal server error during registration.' });
-  } finally {
-    client.release();
   }
 };
 
-/**
- * Standard Login (Student and fallback Faculty)
- */
 export const login = async (req, res) => {
-  const { email, password, otp } = req.body;
-
-  if (!email || !otp) {
-    return res.status(400).json({ error: 'Email and OTP are required.' });
-  }
-
-  const storedData = otpStore.get(email.toLowerCase().trim());
-  if (!storedData || storedData.otp !== otp || Date.now() > storedData.expires) {
-    return res.status(401).json({ error: 'Invalid or expired OTP.' });
-  }
-  otpStore.delete(email.toLowerCase().trim());
+  const { idToken } = req.body;
+  if (!idToken) return res.status(400).json({ error: 'idToken is required.' });
 
   try {
-    const userRes = await pool.query(
-      `SELECT id, first_name, last_name, email, password_hash, role, created_at
-       FROM users WHERE email = $1`,
-      [email.toLowerCase().trim()]
-    );
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const phoneNumber = decodedToken.phone_number;
+    if (!phoneNumber) return res.status(400).json({ error: 'Phone number not found in token.' });
 
-    if (userRes.rows.length === 0) {
-      return res.status(401).json({ error: 'User not found.' });
-    }
+    const userRes = await pool.query(`SELECT id, first_name, last_name, email, phone, role FROM users WHERE phone = $1`, [phoneNumber]);
+    if (userRes.rows.length === 0) return res.status(404).json({ error: 'User not found. Please register first.' });
 
     const user = userRes.rows[0];
-
-    // If user is a student, we also verify password
-    if (user.role === 'student') {
-      if (!password) return res.status(400).json({ error: 'Password required for students.' });
-      const isMatch = await bcrypt.compare(password, user.password_hash);
-      if (!isMatch) {
-        return res.status(401).json({ error: 'Invalid email or password.' });
-      }
-    }
-
-    // Record login timestamp
     await recordLoginLog(user.id, req);
 
-    // Fetch student profile if student
-    let profileData = null;
-    let enrolledCourse = null;
-    if (user.role === 'student') {
-      const profRes = await pool.query(
-        `SELECT sp.current_level, sp.entrance_completed,
-                f.id as faculty_id, f.first_name as faculty_first_name, f.last_name as faculty_last_name
-         FROM student_profiles sp
-         LEFT JOIN users f ON sp.assigned_faculty_id = f.id
-         WHERE sp.user_id = $1`,
-        [user.id]
-      );
-      profileData = profRes.rows[0] || null;
-
-      const enrollRes = await pool.query(
-        `SELECT sce.course_id, sce.faculty_id, c.title as course_title, c.code as course_code,
-                f.first_name as faculty_first_name, f.last_name as faculty_last_name
-         FROM student_course_enrollments sce
-         JOIN courses c ON sce.course_id = c.id
-         LEFT JOIN users f ON sce.faculty_id = f.id
-         WHERE sce.student_id = $1 AND sce.status = 'active'
-         LIMIT 1`,
-        [user.id]
-      );
-      enrolledCourse = enrollRes.rows[0] || null;
-    }
-
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        firstName: user.first_name,
-        lastName: user.last_name,
-      },
+    const jwtToken = jwt.sign(
+      { id: user.id, phone: user.phone, email: user.email, role: user.role, firstName: user.first_name, lastName: user.last_name },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
 
     return res.status(200).json({
       success: true,
-      token,
-      user: {
-        id: user.id,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        email: user.email,
-        role: user.role,
-        currentLevel: profileData ? profileData.current_level : null,
-        entranceCompleted: profileData ? Boolean(profileData.entrance_completed) : null,
-        faculty: profileData?.faculty_first_name ? `${profileData.faculty_first_name} ${profileData.faculty_last_name}` : 'Dr. Robert Vance',
-        assignedFacultyId: profileData?.faculty_id || null,
-        enrolledCourse,
-      },
+      token: jwtToken,
+      user: { id: user.id, firstName: user.first_name, lastName: user.last_name, phone: user.phone, email: user.email, role: user.role }
     });
   } catch (err) {
     console.error('Login Error:', err);
-    return res.status(500).json({ error: 'Internal server error during login.' });
+    return res.status(401).json({ error: 'Invalid or expired phone token.' });
   }
 };
 

@@ -6,8 +6,9 @@ export async function createSchema() {
       id TEXT PRIMARY KEY,
       first_name TEXT NOT NULL,
       last_name TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
+      phone TEXT UNIQUE,
+      email TEXT UNIQUE,
+      password_hash TEXT,
       role TEXT NOT NULL CHECK(role IN ('student', 'faculty', 'mentor', 'admin')),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
