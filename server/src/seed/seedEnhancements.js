@@ -123,25 +123,15 @@ Explanation: nums[0] + nums[1] == 9, return [0, 1].
  */
 function twoSum(nums, target) {
   // Write your code here
-  const map = new Map();
-  for (let i = 0; i < nums.length; i++) {
-    const complement = target - nums[i];
-    if (map.has(complement)) {
-      return [map.get(complement), i];
-    }
-    map.set(nums[i], i);
-  }
-  return [];
+  
 }
 `,
         test_cases_json: JSON.stringify([
           { id: 1, input: [[2, 7, 11, 15], 9], expected: [0, 1], isHidden: false },
           { id: 2, input: [[3, 2, 4], 6], expected: [1, 2], isHidden: false },
-          { id: 3, input: [[3, 3], 6], expected: [0, 1], isHidden: false },
-          { id: 4, input: [[1, 4, 8, 11, 19], 20], expected: [0, 4], isHidden: true },
+          { id: 3, input: [[3, 3], 6], expected: [0, 1], isHidden: true },
         ]),
-        hints: 'Try using a Hash Map to store previously visited numbers and their indices for O(n) lookup.',
-        round: 1,
+        hints: JSON.stringify(['Try using a Hash Map to store numbers you have already seen.'])
       },
       {
         id: crypto.randomUUID(),
@@ -166,18 +156,8 @@ Input: s = "(]" -> Output: false
  * @return {boolean}
  */
 function isValid(s) {
-  const stack = [];
-  const map = { ')': '(', '}': '{', ']': '[' };
-
-  for (let char of s) {
-    if (char === '(' || char === '{' || char === '[') {
-      stack.push(char);
-    } else if (map[char]) {
-      if (stack.pop() !== map[char]) return false;
-    }
-  }
-
-  return stack.length === 0;
+  // Write your code here
+  
 }
 `,
         test_cases_json: JSON.stringify([
@@ -187,19 +167,16 @@ function isValid(s) {
           { id: 4, input: ['([)]'], expected: false, isHidden: true },
           { id: 5, input: ['{[]}'], expected: true, isHidden: true },
         ]),
-        hints: 'A LIFO Stack is ideal for checking opening and matching closing brackets.',
-        round: 2,
+        hints: JSON.stringify(['Use a Stack data structure.', 'Push opening brackets, pop and compare for closing brackets.'])
       },
       {
         id: crypto.randomUUID(),
         course_id: courseId,
         difficulty: 'advanced',
-        title: 'Longest Common Subsequence (DP)',
-        description: `Given two strings \`text1\` and \`text2\`, return the **length** of their longest common subsequence. If there is no common subsequence, return \`0\`.
+        title: 'Longest Common Subsequence',
+        description: `Given two strings \`text1\` and \`text2\`, return the length of their longest common subsequence. If there is no common subsequence, return \`0\`.
 
-A **subsequence** is a sequence derived from the original string by deleting some (possibly zero) characters without changing the relative order.
-
-### Example:
+### Example 1:
 \`\`\`
 Input: text1 = "abcde", text2 = "ace"
 Output: 3
@@ -222,35 +199,18 @@ Output: 0
  * @return {number}
  */
 function longestCommonSubsequence(text1, text2) {
-  const m = text1.length;
-  const n = text2.length;
-
-  // Build a 2D DP table
-  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
-
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      if (text1[i - 1] === text2[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1] + 1;
-      } else {
-        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-      }
-    }
-  }
-
-  return dp[m][n];
+  // Write your code here
+  
 }
 `,
         test_cases_json: JSON.stringify([
           { id: 1, input: ['abcde', 'ace'], expected: 3, isHidden: false },
           { id: 2, input: ['abc', 'abc'], expected: 3, isHidden: false },
           { id: 3, input: ['abc', 'def'], expected: 0, isHidden: false },
-          { id: 4, input: ['oxcpqrsvwf', 'shmtulqrypy'], expected: 2, isHidden: true },
-          { id: 5, input: ['bsbininm', 'jmjkbkjkv'], expected: 1, isHidden: true },
+          { id: 4, input: ['pmjghexybyrgzise', 'hafcdqbgncrcbihkd'], expected: 4, isHidden: true },
         ]),
-        hints: 'Use 2D Dynamic Programming. dp[i][j] = length of LCS of text1[0..i-1] and text2[0..j-1].',
-        round: 3,
-      },
+        hints: JSON.stringify(['Dynamic Programming is your friend.', 'Build a 2D array dp[i][j] representing the LCS of text1[0..i] and text2[0..j].'])
+      }
     ];
 
     for (const c of challenges) {
@@ -306,5 +266,6 @@ function longestCommonSubsequence(text1, text2) {
 }
 
 seedEnhancements().catch(console.error);
+
 
 

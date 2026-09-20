@@ -18,7 +18,7 @@ function formatTime(secs) {
 }
 
 export default function EntranceExamPage({ onComplete }) {
-  const { refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [courseId, setCourseId] = useState(null);
@@ -43,14 +43,17 @@ export default function EntranceExamPage({ onComplete }) {
   useEffect(() => {
     async function initExam() {
       try {
-        setLoading(true);
-        setLoadingStatus('Fetching enrolled course…');
-
-        const coursesRes = await api.courses.list();
-        const course = coursesRes.courses?.[0];
-        if (!course) { setError('No active course found. Please enroll in a course first.'); return; }
-        setCourseId(course.id);
-        setCourseTitle(course.title);
+          setLoading(true);
+          setLoadingStatus('Fetching enrolled course...');
+  
+          if (!user?.enrolledCourse) { 
+            setError('No active course found. Please enroll in a course first before taking the diagnostic test.'); 
+            setLoading(false);
+            return; 
+          }
+          const course = { id: user.enrolledCourse.course_id, title: user.enrolledCourse.course_title };
+          setCourseId(course.id);
+          setCourseTitle(course.title);
 
         setLoadingStatus(`Generating AI diagnostic questions for "${course.title}"…`);
 
@@ -426,3 +429,5 @@ export default function EntranceExamPage({ onComplete }) {
     </div>
   );
 }
+
+
