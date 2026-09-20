@@ -1,5 +1,3 @@
-import { sendOtpEmail } from '../services/emailService.js';
-const otpStore = new Map();
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'node:crypto';
@@ -29,17 +27,11 @@ async function recordLoginLog(userId, req) {
  * Student Registration
  */
 export const register = async (req, res) => {
-  const { firstName, lastName, email, password, role = 'student', otp } = req.body;
+  const { firstName, lastName, email, password, role = 'student' } = req.body;
 
-  if (!firstName || !lastName || !email || !password || !otp) {
-    return res.status(400).json({ error: 'All fields including OTP are required.' });
+  if (!firstName || !lastName || !email || !password) {
+    return res.status(400).json({ error: 'All fields are required.' });
   }
-
-  const storedData = otpStore.get(email.toLowerCase().trim());
-  if (!storedData || storedData.otp !== otp || Date.now() > storedData.expires) {
-    return res.status(401).json({ error: 'Invalid or expired verification code.' });
-  }
-  // Do not delete OTP here yet, let it be consumed successfully first or delete after.
   
   // Student default, faculty via admin/preset
   const userRole = role === 'faculty' ? 'faculty' : 'student';
@@ -78,7 +70,6 @@ export const register = async (req, res) => {
     }
 
     await client.query('COMMIT');
-    otpStore.delete(email.toLowerCase().trim());
 
     // Record login log
     await recordLoginLog(userId, req);
@@ -122,17 +113,11 @@ export const register = async (req, res) => {
  * Standard Login (Student and fallback Faculty)
  */
 export const login = async (req, res) => {
-  const { email, password, otp } = req.body;
+const { email, password } = req.body;
 
-  if (!email || !otp) {
-    return res.status(400).json({ error: 'Email and OTP are required.' });
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required.' });
   }
-
-  const storedData = otpStore.get(email.toLowerCase().trim());
-  if (!storedData || storedData.otp !== otp || Date.now() > storedData.expires) {
-    return res.status(401).json({ error: 'Invalid or expired OTP.' });
-  }
-  otpStore.delete(email.toLowerCase().trim());
 
   try {
     const userRes = await pool.query(
@@ -147,13 +132,9 @@ export const login = async (req, res) => {
 
     const user = userRes.rows[0];
 
-    // If user is a student, we also verify password
-    if (user.role === 'student') {
-      if (!password) return res.status(400).json({ error: 'Password required for students.' });
-      const isMatch = await bcrypt.compare(password, user.password_hash);
-      if (!isMatch) {
-        return res.status(401).json({ error: 'Invalid email or password.' });
-      }
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
     // Record login timestamp
@@ -478,30 +459,5 @@ export const getDemoAccounts = async (req, res) => {
 /**
  * Generate and send OTP (Used for both Student and Faculty)
  */
-export const requestOtp = async (req, res) => {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ error: 'Email is required.' });
 
-  // Generate a random 6-digit OTP
-  const otp = crypto.randomInt(100000, 999999).toString();
-  
-  // Store it (expires in 10 minutes)
-  otpStore.set(email.toLowerCase().trim(), {
-    otp,
-    expires: Date.now() + 10 * 60 * 1000
-  });
 
-  // Print to terminal for debugging
-  console.log(`\n[SIMULATED EMAIL] OTP for ${email} is: ${otp}\n`);
-
-  // Attempt to send real email
-  try {
-    await sendOtpEmail(email.toLowerCase().trim(), otp);
-  } catch (err) {
-    // We swallow the error here in dev mode if they haven't set up the email yet,
-    // so they can still test using the terminal code.
-    console.warn("Could not send real email. Relying on terminal output.");
-  }
-
-  res.json({ success: true, message: 'OTP sent' });
-};
