@@ -1,9 +1,7 @@
 import express from 'express';
 import {
   register,
-  login,
-  requestOtp,
-  getMe,
+  login,  getMe,
   getDemoAccounts,
   initiateFacultyQRSession,
   checkFacultyQRSessionStatus,
@@ -16,7 +14,6 @@ const router = express.Router();
 // Public auth endpoints
 router.post('/register', register);
 router.post('/login', login);
-router.post('/request-otp', requestOtp);
 router.get('/demo-accounts', getDemoAccounts);
 
 // Faculty QR code authentication
@@ -28,3 +25,4 @@ router.post('/faculty-qr/verify', verifyFacultyQRSession);
 router.get('/me', authenticateToken, getMe);
 
 export default router;
+
