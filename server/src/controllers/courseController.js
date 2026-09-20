@@ -306,7 +306,7 @@ export const enrollCourseWithFaculty = async (req, res) => {
     // 3. Update student profile assigned_faculty_id
     await pool.query(
       `UPDATE student_profiles
-       SET assigned_faculty_id = $1, updated_at = CURRENT_TIMESTAMP
+       SET assigned_faculty_id = $1
        WHERE user_id = $2`,
       [facultyId, studentId]
     );
