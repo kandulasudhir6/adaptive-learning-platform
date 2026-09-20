@@ -3,10 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
 import RoadmapViewer from '../components/RoadmapViewer';
 import LevelBadge from '../components/LevelBadge';
-import {
-  Users, BookOpen, Upload, CheckCircle2, AlertCircle, Clock,
-  Map, Loader2, Save, ChevronDown, ChevronUp, BarChart3, Edit3, User, ClipboardCheck, Settings, Shield
-} from 'lucide-react';
+import { Users, BookOpen, Upload, CheckCircle2, AlertCircle, Clock, Map, Loader2, Save, ChevronDown, ChevronUp, BarChart3, Edit3, User, ClipboardCheck, Settings, Shield, BarChart2, Database } from 'lucide-react';
 
 function Notice({ notice, onClose }) {
   if (!notice) return null;
