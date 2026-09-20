@@ -90,7 +90,7 @@ export async function seedEnhancements() {
   }
 
   // 4. Seed Coding Challenges for CodeTantra arena
-  const courseCs101 = await query("SELECT id FROM courses WHERE code = 'C101'").get();
+  const courseCs101 = await query("SELECT id FROM courses WHERE code = 'C101'").then(r => r.rows[0]);
   const courseId = courseCs101?.id;
 
   if (courseId) {
