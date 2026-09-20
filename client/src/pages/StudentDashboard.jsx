@@ -276,10 +276,10 @@ export default function StudentDashboard({ onOpenExam, onOpenModule, onOpenPerio
           <div className="max-w-xl">
             <h3 className="text-lg font-bold text-gray-100 mb-2 flex items-center gap-2"><UserCheck className="w-5 h-5 text-indigo-500" />Enrollment & Mentor Selection</h3>
             <p className="text-sm text-gray-400 mb-6">Select your course and choose a faculty mentor to guide your learning journey.</p>
-            {enrollSuccess ? (
+            {enrollSuccess || user?.enrolledCourse ? (
               <div className="p-5 rounded-2xl bg-green-50 border border-green-200 text-green-700 flex items-center gap-3">
                 <CheckCircle2 className="w-6 h-6 text-green-500 shrink-0" />
-                <div><div className="font-bold">Enrollment Confirmed!</div><div className="text-sm text-green-600">Your faculty mentor has been notified.</div></div>
+                <div><div className="font-bold">Enrollment Confirmed!</div><div className="text-sm text-green-600">You are enrolled in {user?.enrolledCourse?.course_title || 'this course'} and mentored by Dr. {user?.enrolledCourse?.faculty_first_name || 'your faculty'}.</div></div>
               </div>
             ) : (
               <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-5 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
