@@ -5,7 +5,7 @@ import RoadmapViewer from '../components/RoadmapViewer';
 import LevelBadge from '../components/LevelBadge';
 import {
   Users, BookOpen, Upload, CheckCircle2, AlertCircle, Clock,
-  Map, Loader2, Save, ChevronDown, ChevronUp, BarChart3, Edit3, User
+  Map, Loader2, Save, ChevronDown, ChevronUp, BarChart3, Edit3, User, ClipboardCheck, Settings, Shield
 } from 'lucide-react';
 
 function Notice({ notice, onClose }) {
@@ -97,8 +97,10 @@ function StudentDetailPanel({ student, onNotice }) {
 
 export default function FacultyDashboard() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
-  const [overview, setOverview] = useState(null);
+  const [activeTab, setActiveTab] = useState('requests');
+  const [requests, setRequests] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [newSubject, setNewSubject] = useState({ subject_name: '', category: 'programming', description: '' });
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState(null);
@@ -110,9 +112,9 @@ export default function FacultyDashboard() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        if (activeTab === 'overview') {
-          const res = await api.faculty.getOverview();
-          setOverview(res);
+        if (activeTab === 'requests') {
+          const res = await api.faculty.getRequests();
+          setRequests(res.requests || []);
         } else if (activeTab === 'students') {
           const res = await api.faculty.getMyStudents();
           setStudents(res.students || []);
@@ -142,21 +144,30 @@ export default function FacultyDashboard() {
         
         <nav className="flex-1 px-4 space-y-2">
           <button
-            onClick={() => setActiveTab('overview')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-              activeTab === 'overview' ? 'bg-purple-900/30 text-purple-400 border border-purple-500/30' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
-            }`}
-          >
-            <BarChart3 className="w-5 h-5" /> Overview
-          </button>
-          
-          <button
             onClick={() => setActiveTab('students')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
               activeTab === 'students' ? 'bg-purple-900/30 text-purple-400 border border-purple-500/30' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
             }`}
           >
             <Users className="w-5 h-5" /> My Students
+          </button>
+
+          <button
+            onClick={() => setActiveTab('requests')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
+              activeTab === 'requests' ? 'bg-purple-900/30 text-purple-400 border border-purple-500/30' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
+            }`}
+          >
+            <ClipboardCheck className="w-5 h-5" /> Test Requests
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
+              activeTab === 'settings' ? 'bg-purple-900/30 text-purple-400 border border-purple-500/30' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
+            }`}
+          >
+            <Settings className="w-5 h-5" /> Settings
           </button>
         </nav>
         
@@ -183,51 +194,65 @@ export default function FacultyDashboard() {
               <Loader2 className="w-8 h-8 animate-spin text-purple-500 mb-4" />
               <p className="text-gray-400">Loading data...</p>
             </div>
-          ) : activeTab === 'overview' && overview ? (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <h1 className="text-3xl font-black text-white">Platform Overview</h1>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-lg">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 bg-purple-900/30 rounded-lg text-purple-400">
-                      <Users className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="text-gray-400 font-medium">Total Students Enrolled</h3>
-                      <p className="text-4xl font-black text-white">{overview.totalStudents}</p>
-                    </div>
-                  </div>
-                </div>
+          ) : activeTab === 'requests' ? (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex items-center justify-between mb-8">
+                <h1 className="text-3xl font-black text-white">Pending Test Requests</h1>
+                <span className="text-gray-400">{requests.length} Requests</span>
               </div>
-
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-lg">
-                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                  <User className="w-5 h-5 text-indigo-400" /> Active Mentors & Assignments
-                </h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="border-b border-gray-800 text-gray-400 text-sm">
-                        <th className="pb-3 font-medium">Mentor Name</th>
-                        <th className="pb-3 font-medium text-right">Students Assigned</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-800">
-                      {overview.mentors.map(m => (
-                        <tr key={m.mentor_id} className="hover:bg-gray-800/50 transition-colors">
-                          <td className="py-4 text-gray-200 font-medium">{m.mentor_name}</td>
-                          <td className="py-4 text-gray-400 text-right">
-                            <span className="px-3 py-1 bg-purple-900/30 text-purple-400 rounded-full text-sm font-bold border border-purple-500/20">
-                              {m.assigned_students} Students
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {requests.length === 0 ? (
+                <div className="text-center py-16 bg-gray-900 border border-gray-800 rounded-xl">
+                  <ClipboardCheck className="w-12 h-12 text-gray-700 mx-auto mb-4" />
+                  <p className="text-gray-400">No pending test requests to review.</p>
                 </div>
-              </div>
+              ) : (
+                <div className="space-y-4">
+                  {requests.map(req => (
+                    <div key={req.request_id} className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-lg flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-100">{req.student_first_name} {req.student_last_name}</h3>
+                        <p className="text-sm text-gray-400 mb-2">{req.course_title} - {req.module_title}</p>
+                        <div className="flex items-center gap-3 text-xs font-medium">
+                          <span className={`px-2 py-1 rounded-md ${req.thresholdMet ? 'bg-green-900/30 text-green-400' : 'bg-yellow-900/30 text-yellow-400'}`}>
+                            {req.thresholdLabel}
+                          </span>
+                          <span className="text-gray-500">Time spent: {req.formattedTimeSpent}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 w-full md:w-auto">
+                        <button 
+                          onClick={async () => {
+                            try {
+                              const res = await api.faculty.reviewRequest(req.request_id, { status: 'approved' });
+                              if(res.success) {
+                                showNotice({ type: 'success', message: 'Test approved!' });
+                                setRequests(prev => prev.filter(r => r.request_id !== req.request_id));
+                              }
+                            } catch (e) { showNotice({ type: 'error', message: 'Failed to approve.'}); }
+                          }}
+                          className="flex-1 md:flex-none px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition cursor-pointer"
+                        >
+                          Approve
+                        </button>
+                        <button 
+                          onClick={async () => {
+                            try {
+                              const res = await api.faculty.reviewRequest(req.request_id, { status: 'rejected', rejectionReason: 'Study time requirement not met.' });
+                              if(res.success) {
+                                showNotice({ type: 'success', message: 'Test rejected.' });
+                                setRequests(prev => prev.filter(r => r.request_id !== req.request_id));
+                              }
+                            } catch (e) { showNotice({ type: 'error', message: 'Failed to reject.'}); }
+                          }}
+                          className="flex-1 md:flex-none px-4 py-2 bg-gray-800 hover:bg-red-900/50 hover:text-red-400 text-gray-300 font-bold rounded-lg transition cursor-pointer"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : activeTab === 'students' ? (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -278,6 +303,57 @@ export default function FacultyDashboard() {
                   </div>
                 </div>
               )}
+            </div>
+          ) : activeTab === 'settings' ? (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <h1 className="text-3xl font-black text-white">Faculty Settings</h1>
+              
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-lg">
+                <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-4">
+                  <Shield className="w-5 h-5 text-indigo-400" /> Secure Classroom Login
+                </h3>
+                <p className="text-gray-400 text-sm mb-6">
+                  Enable dynamic QR code authentication for secure terminal login in the classroom. When enabled, you must scan the QR code using your registered authenticator device to verify your presence.
+                </p>
+                <button className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition shadow-[0_0_15px_rgba(79,70,229,0.2)] cursor-pointer">
+                  Configure Secure Login
+                </button>
+              </div>
+
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-lg">
+                <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-4">
+                  <BookOpen className="w-5 h-5 text-indigo-400" /> My Specialized Subjects
+                </h3>
+                <p className="text-gray-400 text-sm mb-6">
+                  Add subjects you specialize in so that students can choose you as their mentor for these topics.
+                </p>
+                <div className="flex gap-3 mb-6">
+                  <input type="text" placeholder="Subject Name (e.g. Data Structures)" className="flex-1 bg-gray-950 border border-gray-800 text-gray-100 text-sm rounded-lg px-4 py-2" value={newSubject.subject_name} onChange={e => setNewSubject({...newSubject, subject_name: e.target.value})} />
+                  <input type="text" placeholder="Category" className="w-1/4 bg-gray-950 border border-gray-800 text-gray-100 text-sm rounded-lg px-4 py-2" value={newSubject.category} onChange={e => setNewSubject({...newSubject, category: e.target.value})} />
+                  <button onClick={async () => {
+                    if(!newSubject.subject_name) return;
+                    try {
+                      await api.faculty.uploadFacultySubject(newSubject);
+                      setNewSubject({ subject_name: '', category: 'programming', description: '' });
+                      const res = await api.faculty.getFacultySubjects();
+                      setSubjects(res.subjects || []);
+                      showNotice({ type: 'success', message: 'Subject added!' });
+                    } catch(e) { showNotice({ type: 'error', message: 'Failed to add subject' }); }
+                  }} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg text-sm cursor-pointer">Add Subject</button>
+                </div>
+                {subjects.length > 0 && (
+                  <div className="space-y-2">
+                    {subjects.map(sub => (
+                      <div key={sub.id} className="px-4 py-3 bg-gray-800/50 rounded-lg flex items-center justify-between">
+                        <div>
+                          <p className="font-bold text-gray-200">{sub.subject_name}</p>
+                          <p className="text-xs text-gray-500 uppercase">{sub.category}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           ) : null}
         </div>
