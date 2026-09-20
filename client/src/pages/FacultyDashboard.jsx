@@ -116,6 +116,9 @@ export default function FacultyDashboard() {
         } else if (activeTab === 'students') {
           const res = await api.faculty.getMyStudents();
           setStudents(res.students || []);
+        } else if (activeTab === 'settings') {
+          const res = await api.faculty.getFacultySubjects();
+          setSubjects(res.subjects || []);
         }
       } catch (err) {
         showNotice({ type: 'error', message: 'Failed to load data.' });
@@ -282,5 +285,10 @@ export default function FacultyDashboard() {
     </div>
   );
 }
+
+
+
+
+
 
 

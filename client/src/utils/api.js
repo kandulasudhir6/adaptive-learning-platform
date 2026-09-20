@@ -132,7 +132,13 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify(payload),
       }),
-    getSubjects: () => request('/faculty/subjects'),
+    getFacultySubjects: () => request('/faculty/subjects'),
+    uploadFacultySubject: (payload) => 
+      request('/faculty/subjects', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
+    getDiagnosticQuestions: () => request('/faculty/diagnostic-questions'),
     uploadSubject: (payload) =>
       request('/faculty/subjects', {
         method: 'POST',
@@ -146,3 +152,4 @@ export const api = {
       }),
   },
 };
+

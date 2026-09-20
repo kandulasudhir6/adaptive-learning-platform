@@ -160,7 +160,7 @@ export default function StudentDashboard({ onOpenExam, onOpenModule, onOpenPerio
           {[
             { id: 'courses', label: 'Courses & Modules', icon: BookMarked },
             { id: 'roadmap', label: 'My Roadmap', icon: Map },
-            { id: 'enroll', label: 'Enroll & Mentor', icon: UserCheck },
+            { id: 'enroll', label: 'Enroll & Mentor', icon: UserCheck, Settings, Shield },
           ].map(({ id, label, icon: Icon }) => (
             <button key={id} type="button" onClick={() => handleTabChange(id)}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
@@ -327,3 +327,6 @@ export default function StudentDashboard({ onOpenExam, onOpenModule, onOpenPerio
     </div>
   );
 }
+
+
+
