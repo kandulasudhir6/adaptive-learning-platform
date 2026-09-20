@@ -25,7 +25,7 @@ export async function seedEnhancements() {
     robertId = crypto.randomUUID();
     await query(`
       INSERT INTO users (id, first_name, last_name, email, password_hash, role)
-      VALUES (?, 'Robert', 'Vance', 'dr.jenkins@faculty.com', ?, 'faculty')
+      VALUES (?, 'Robert', 'Vance', 'dr.jenkins@faculty.com', ?, 'faculty') ON CONFLICT (email) DO NOTHING
     `, robertId, passwordHash);
   }
 
@@ -36,7 +36,7 @@ export async function seedEnhancements() {
     sarahId = crypto.randomUUID();
     await query(`
       INSERT INTO users (id, first_name, last_name, email, password_hash, role)
-      VALUES (?, 'Sarah', 'Jenkins', 'prof.sarah@faculty.com', ?, 'faculty')
+      VALUES (?, 'Sarah', 'Jenkins', 'prof.sarah@faculty.com', ?, 'faculty') ON CONFLICT (email) DO NOTHING
     `, sarahId, passwordHash);
   } else {
     await query("UPDATE users SET role = 'faculty', email = 'prof.sarah@faculty.com' WHERE id = ?", sarahId);
@@ -265,7 +265,8 @@ function longestCommonSubsequence(text1, text2) {
   console.log('✅ Enhancements seeded: Faculty accounts, Specialized Subjects, CodeTantra Challenges & Day-to-Day Logins!');
 }
 
-seedEnhancements().catch(console.error);
+
+
 
 
 
