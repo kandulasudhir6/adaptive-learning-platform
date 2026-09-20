@@ -206,6 +206,7 @@ Requirements:
 - Wrong answers (distractors) must be plausible but clearly incorrect
 - No repeated questions
 - Questions should vary in topic within the ${difficulty} tier
+- IMPORTANT: Make these questions highly unique, cover niche areas, and be different from standard textbook questions. (Random Variation Seed: ${Math.random()})
 
 Respond with ONLY a valid JSON array (no markdown, no explanation):
 [
