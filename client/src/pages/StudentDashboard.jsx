@@ -5,7 +5,7 @@ import LevelBadge from '../components/LevelBadge';
 import RoadmapViewer from '../components/RoadmapViewer';
 import {
   BookOpen, CheckCircle2, Lock, ArrowRight, AlertCircle, Award,
-  Play, Hourglass, HelpCircle, Sparkles, Map, BookMarked, UserCheck, Loader2,
+  Play, Hourglass, HelpCircle, Sparkles, Map, BookMarked, UserCheck, Loader2, Settings, Shield
 } from 'lucide-react';
 
 export default function StudentDashboard({ onOpenExam, onOpenModule, onOpenPeriodicExam }) {
@@ -327,6 +327,7 @@ export default function StudentDashboard({ onOpenExam, onOpenModule, onOpenPerio
     </div>
   );
 }
+
 
 
 
