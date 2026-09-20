@@ -35,7 +35,13 @@ export default function StudentDashboard({ onOpenExam, onOpenModule, onOpenPerio
       ]);
       if (coursesRes.courses?.length > 0) {
         setCourses(coursesRes.courses);
-        const primary = coursesRes.courses[0];
+        let primary = null;
+        if (user?.enrolledCourse?.course_id) {
+          primary = coursesRes.courses.find(c => c.id === user.enrolledCourse.course_id);
+        }
+        if (!primary) {
+          primary = coursesRes.courses[0];
+        }
         setSelectedCourse(primary);
         await loadCourseContent(primary.id);
       }
