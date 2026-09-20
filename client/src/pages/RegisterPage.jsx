@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { GraduationCap, ShieldCheck, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
+import { GraduationCap, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 
 export default function RegisterPage({ onBack, onLoginClick }) {
   const { register } = useAuth();
   
-  const [role, setRole] = useState('student'); // 'student' | 'faculty'
+  const [role, setRole] = useState('student');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -122,14 +122,20 @@ export default function RegisterPage({ onBack, onLoginClick }) {
                 <button
                   type="button"
                   onClick={() => setRole('student')}
-                  className={\py-2 px-4 border rounded-lg text-sm font-semibold transition-colors \\}
+                  className={
+                    "py-2 px-4 border rounded-lg text-sm font-semibold transition-colors " +
+                    (role === 'student' ? 'bg-purple-900/50 border-purple-500 text-purple-300' : 'bg-gray-950 border-gray-800 text-gray-400 hover:border-gray-600')
+                  }
                 >
                   Student
                 </button>
                 <button
                   type="button"
                   onClick={() => setRole('faculty')}
-                  className={\py-2 px-4 border rounded-lg text-sm font-semibold transition-colors \\}
+                  className={
+                    "py-2 px-4 border rounded-lg text-sm font-semibold transition-colors " +
+                    (role === 'faculty' ? 'bg-purple-900/50 border-purple-500 text-purple-300' : 'bg-gray-950 border-gray-800 text-gray-400 hover:border-gray-600')
+                  }
                 >
                   Faculty
                 </button>
