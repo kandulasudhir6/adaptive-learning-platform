@@ -15,167 +15,87 @@ const shuffleArray = (array) => {
   return arr;
 };
 
+
 const staticGenerators = {
   beginner: [
-    () => {
-      const step = randomChoice([2, 3, 4]);
-      return {
-        questionText: `What is the time complexity of: for(let i=1; i<n; i*=${step}) { count++; }`,
-        correct: `O(log n)`,
-        distractors: ['O(n)', 'O(n²)', 'O(1)'],
-      };
-    },
     () => ({
-      questionText: 'Which data structure uses LIFO (Last In, First Out) order?',
-      correct: 'Stack',
-      distractors: ['Queue', 'Linked List', 'Binary Tree'],
+      questionText: 'What is the correct syntax to declare a pointer to an integer in C?',
+      correct: 'int *ptr;',
+      distractors: ['int ptr*;', 'pointer int ptr;', 'int &ptr;'],
     }),
     () => ({
-      questionText: 'What is the worst-case time complexity of Binary Search on a sorted array of n elements?',
-      correct: 'O(log n)',
-      distractors: ['O(n)', 'O(n log n)', 'O(1)'],
-    }),
-    () => {
-      const size = randomChoice([16, 32, 64]);
-      return {
-        questionText: `In a sorted array of ${size} elements, what is the maximum number of comparisons Binary Search makes?`,
-        correct: `${Math.ceil(Math.log2(size)) + 1}`,
-        distractors: [`${size / 2}`, `${size}`, `${Math.ceil(Math.log2(size))}`],
-      };
-    },
-    () => ({
-      questionText: 'Which sorting algorithm has O(n log n) average-case complexity?',
-      correct: 'Merge Sort',
-      distractors: ['Bubble Sort', 'Insertion Sort', 'Selection Sort'],
+      questionText: 'Which function is used to allocate memory dynamically in C?',
+      correct: 'malloc()',
+      distractors: ['alloc()', 'memalloc()', 'new()'],
     }),
     () => ({
-      questionText: 'What does O(1) space complexity mean?',
-      correct: 'The algorithm uses a fixed amount of memory regardless of input size',
-      distractors: [
-        'The algorithm runs in constant time',
-        'The algorithm never allocates memory',
-        'The algorithm uses O(n) memory in best case',
-      ],
+      questionText: 'What is the format specifier for a double data type in C?',
+      correct: '%lf',
+      distractors: ['%d', '%f', '%x'],
     }),
     () => ({
-      questionText: 'In a Queue (FIFO), which operation removes an element?',
-      correct: 'Dequeue (from front)',
-      distractors: ['Pop (from top)', 'Delete (from back)', 'Shift (from tail)'],
+      questionText: 'How do you access the value stored at a pointer address?',
+      correct: 'Using the * operator (*ptr)',
+      distractors: ['Using the & operator (&ptr)', 'Using the -> operator', 'Using the @ operator'],
     }),
   ],
   intermediate: [
     () => ({
-      questionText: "Why does Floyd's Cycle Detection (Tortoise and Hare) work for detecting cycles in linked lists?",
-      correct: 'The fast pointer catches up to the slow pointer within the cycle at rate of 1 node per step',
+      questionText: 'What is the difference between malloc() and calloc()?',
+      correct: 'calloc() initializes the allocated memory to zero, while malloc() does not.',
       distractors: [
-        'The fast pointer hashes node addresses to a set',
-        'Both pointers reset to head after C steps',
-        'The slow pointer marks visited nodes with a flag',
+        'malloc() allocates memory from the heap, calloc() from the stack',
+        'malloc() takes two arguments, calloc() takes one',
+        'There is no difference, they are aliases',
       ],
     }),
     () => ({
-      questionText: 'Which tree traversal produces a sorted sequence from a Binary Search Tree?',
-      correct: 'In-Order (Left → Root → Right)',
-      distractors: ['Pre-Order (Root → Left → Right)', 'Post-Order (Left → Right → Root)', 'Level-Order (BFS)'],
-    }),
-    () => {
-      const leftH = randomInt(2, 4);
-      const rightH = leftH + 2;
-      return {
-        questionText: `An AVL tree node has left subtree height ${leftH} and right subtree height ${rightH}. What is its balance factor and does it need rebalancing?`,
-        correct: `Balance factor = ${leftH - rightH}; rotation required`,
-        distractors: [
-          `Balance factor = 0; no rotation`,
-          `Balance factor = ${rightH - leftH}; no rotation`,
-          `Balance factor = ${leftH - rightH}; no rotation`,
-        ],
-      };
-    },
-    () => ({
-      questionText: 'Why is QuickSort typically preferred over MergeSort for arrays in practice?',
-      correct: 'QuickSort has better cache locality and lower constant factors despite the same average O(n log n)',
+      questionText: 'What will happen if you free() a pointer twice in C?',
+      correct: 'Undefined behavior, often resulting in a segmentation fault or memory corruption.',
       distractors: [
-        'QuickSort is always O(n log n) even in the worst case',
-        'MergeSort cannot handle duplicate elements',
-        'QuickSort requires O(n) extra memory',
+        'The second free() is ignored by the OS',
+        'It returns a null pointer',
+        'It reallocates the memory',
       ],
     }),
-    () => {
-      const idx = randomChoice([3, 4, 5]);
-      return {
-        questionText: `In a 0-indexed binary heap array, what are the parent and left child indices for node at index ${idx}?`,
-        correct: `Parent: ${Math.floor((idx - 1) / 2)}, Left Child: ${2 * idx + 1}`,
-        distractors: [
-          `Parent: ${idx - 1}, Left Child: ${idx + 1}`,
-          `Parent: ${Math.floor(idx / 2)}, Left Child: ${2 * idx}`,
-          `Parent: ${Math.floor((idx - 1) / 2)}, Left Child: ${2 * idx + 2}`,
-        ],
-      };
-    },
     () => ({
-      questionText: 'What is the time complexity of inserting a key into a Hash Table with a good hash function (average case)?',
-      correct: 'O(1)',
-      distractors: ['O(log n)', 'O(n)', 'O(n log n)'],
+      questionText: 'Which operator is used to access members of a structure through a pointer?',
+      correct: '-> (arrow operator)',
+      distractors: ['. (dot operator)', '* (dereference operator)', '& (address operator)'],
     }),
   ],
   advanced: [
     () => ({
-      questionText: 'Why does Dijkstra\'s algorithm fail on graphs with negative edge weights?',
-      correct: "It assumes a node's shortest distance is finalized once extracted from the priority queue, which negative weights can invalidate",
+      questionText: 'What is the purpose of the restrict keyword in C99?',
+      correct: 'It hints to the compiler that for the lifetime of the pointer, only it or a value directly derived from it will be used to access the object to which it points.',
       distractors: [
-        'It converts negative weights to positive values causing overflow',
-        'It only works on directed acyclic graphs',
-        'Negative weights cause the priority queue to throw exceptions',
-      ],
-    }),
-    () => {
-      const capacity = randomInt(10, 30);
-      return {
-        questionText: `In the 0/1 Knapsack Problem with capacity W=${capacity}, what does dp[i][w] represent?`,
-        correct: 'Maximum value achievable using the first i items with weight limit w',
-        distractors: [
-          'Minimum weight to achieve value i',
-          'Number of permutations summing to w',
-          'Greedy ratio of item i to weight w',
-        ],
-      };
-    },
-    () => ({
-      questionText: 'What enables DSU (Disjoint Set Union) with path compression and union by rank to achieve O(α(n)) amortized per-operation?',
-      correct: 'Path compression flattens tree depth and union by rank prevents tree skewing, keeping height nearly constant',
-      distractors: [
-        'It uses a balanced BST internally for set membership',
-        'It stores all elements contiguously in L1 cache',
-        'It hashes set identifiers for O(1) lookup',
+        'It prevents the pointer from being modified',
+        'It restricts the pointer to memory within the current stack frame',
+        'It prevents multiple threads from accessing the pointer concurrently',
       ],
     }),
     () => ({
-      questionText: "In A* search, what happens if the heuristic function h(n) is NOT admissible (overestimates true cost)?",
-      correct: 'A* is no longer guaranteed to find the optimal path',
+      questionText: 'How is a union different from a struct in C?',
+      correct: 'In a union, all members share the same memory location, while in a struct, each member has its own memory location.',
       distractors: [
-        'A* enters an infinite loop',
-        'A* degenerates to BFS',
-        'A* runs in O(n!) time',
+        'Unions can only contain basic data types',
+        'Structs are dynamically allocated, unions are statically allocated',
+        'There is no difference, unions are just a typedef of structs',
       ],
     }),
     () => ({
-      questionText: 'What is the ABA problem in lock-free concurrent programming with Compare-And-Swap (CAS)?',
-      correct: 'A value changes A→B→A between a read and CAS, causing the CAS to succeed despite unobserved intermediate mutations',
+      questionText: 'What is a memory leak in C?',
+      correct: 'Failing to deallocate dynamically allocated memory using free() when it is no longer needed.',
       distractors: [
-        'Two threads acquire the same mutex causing deadlock',
-        'Unaligned memory access causes segmentation fault',
-        'Memory addresses wrap around during allocation',
+        'Writing past the bounds of an array',
+        'Accessing memory that has already been freed',
+        'A segmentation fault caused by a null pointer dereference',
       ],
-    }),
-    () => ({
-      questionText: 'In consistent hashing with N nodes, what fraction of keys must be remapped on average when 1 node is removed?',
-      correct: '1/N of all keys',
-      distractors: ['All keys (100%)', '50% of keys', '0 keys'],
     }),
   ],
 };
 
-// ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
 // GEMINI AI QUESTION GENERATION
 // ---------------------------------------------------------------------------
 async function generateWithGemini(courseTitle, difficulty, count) {
@@ -223,7 +143,7 @@ Respond with ONLY a valid JSON array (no markdown, no explanation):
 ]`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-3.6-flash',
       contents: prompt,
       config: { 
         temperature: 0.7, 
@@ -335,9 +255,9 @@ export async function generateDynamicEntranceQuestions(courseId) {
   for (const q of generated) {
     try {
       await pool.query(
-        `INSERT INTO question_bank (id, course_id, module_id, difficulty, question_text, option_a, option_b, option_c, option_d, correct_option)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-        [q.id, q.courseId, q.moduleId, q.difficulty, q.questionText, q.optionA, q.optionB, q.optionC, q.optionD, q.correctOption]
+        `INSERT INTO question_bank (id, course_id, difficulty, question_text, option_a, option_b, option_c, option_d, correct_option)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [q.id, q.courseId, q.difficulty, q.questionText, q.optionA, q.optionB, q.optionC, q.optionD, q.correctOption]
       );
     } catch (err) {
       console.error('Failed to persist question:', err.message);
@@ -373,9 +293,9 @@ export async function generateDynamicPeriodicQuestions(courseId, moduleId, diffi
   for (const q of generated) {
     try {
       await pool.query(
-        `INSERT INTO question_bank (id, course_id, module_id, difficulty, question_text, option_a, option_b, option_c, option_d, correct_option)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-        [q.id, q.courseId, q.moduleId, q.difficulty, q.questionText, q.optionA, q.optionB, q.optionC, q.optionD, q.correctOption]
+        `INSERT INTO question_bank (id, course_id, difficulty, question_text, option_a, option_b, option_c, option_d, correct_option)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [q.id, q.courseId, q.difficulty, q.questionText, q.optionA, q.optionB, q.optionC, q.optionD, q.correctOption]
       );
     } catch (err) {
       console.error('Failed to persist periodic question:', err.message);
